@@ -40,6 +40,13 @@
         .composer textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; min-height: 120px; resize: vertical; padding: 12px; font-size: 16px; font-family: inherit; outline: none; transition: border-color 0.2s ease; }
         .composer textarea:focus { border-color: var(--twitter-blue); }
         .composer-actions { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .composer-tools { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+        .tool-btn { border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; background: #eef3f8; color: #284661; font-weight: 700; cursor: pointer; }
+        .tool-btn:hover { background: #dbecfa; color: #1d9bf0; }
+        .composer-preview { margin-top: 10px; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #f8fbfd; }
+        .composer-preview img, .composer-preview video { width: 100%; max-height: 280px; object-fit: cover; border-radius: 10px; }
+        .preview-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .remove-media { border: none; border-radius: 999px; padding: 6px 10px; background: #ffe8e8; color: #b00020; font-weight: 700; cursor: pointer; }
         .count { font-size: 13px; color: var(--muted); }
         .count.warn { color: #d93025; font-weight: 700; }
         .tweet-btn, .delete-btn { border: none; border-radius: 999px; font-weight: 700; cursor: pointer; }
@@ -52,7 +59,20 @@
         .tweet-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
         .tweet-author { font-weight: 800; }
         .tweet-handle, .tweet-time { color: var(--muted); }
-        .tweet-text { margin-top: 4px; white-space: pre-wrap; line-height: 1.45; }
+        .tweet-text { margin-top: 4px; line-height: 1.45; word-break: break-word; }
+        .tweet-text h1, .tweet-text h2, .tweet-text h3 { margin: 10px 0 4px; line-height: 1.2; }
+        .tweet-text h1 { font-size: 20px; }
+        .tweet-text h2 { font-size: 18px; }
+        .tweet-text h3 { font-size: 16px; }
+        .tweet-text p { margin: 0 0 8px; }
+        .tweet-text code { background: #eef3f8; border-radius: 6px; padding: 2px 5px; font-family: Consolas, monospace; font-size: 13px; }
+        .tweet-text pre { background: #0f1419; color: #e6f6ff; border-radius: 10px; padding: 10px; overflow: auto; margin: 8px 0; }
+        .tweet-text pre code { background: transparent; padding: 0; color: inherit; }
+        .tweet-text .mention { color: #1d9bf0; font-weight: 700; }
+        .tweet-text a { color: #1d9bf0; text-decoration: none; }
+        .tweet-text a:hover { text-decoration: underline; }
+        .tweet-media { margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; background: #0f1419; }
+        .tweet-media img, .tweet-media video { width: 100%; max-height: 380px; object-fit: cover; display: block; }
         .tweet-footer { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
         .delete-btn { padding: 8px 12px; background: #ffe8e8; color: #b00020; }
         .badge { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-size: 11px; font-weight: 800; }
@@ -97,6 +117,12 @@
     <section class="timeline">
         <section class="card composer">
             <textarea id="t-input" maxlength="280" placeholder="What's happening?"></textarea>
+            <div class="composer-tools">
+                <button class="tool-btn" id="media-pick" type="button">Add image/video</button>
+                <input id="media-input" type="file" accept="image/*,video/*" hidden>
+                <span class="meta">Markdown + @mentions supported</span>
+            </div>
+            <div class="composer-preview" id="composer-preview" hidden></div>
             <div class="composer-actions">
                 <span class="count" id="char-count">280 characters</span>
                 <button class="tweet-btn" id="t-send" type="button" disabled>Tweet</button>
@@ -111,6 +137,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc, deleteDoc, where, getDocs, limit, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCz9fehRDGTBC7EQZehiVMNw7jUSSvzku4",
@@ -125,15 +152,20 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     const inputEl = document.getElementById("t-input");
     const sendEl = document.getElementById("t-send");
     const countEl = document.getElementById("char-count");
+    const mediaPickEl = document.getElementById("media-pick");
+    const mediaInputEl = document.getElementById("media-input");
+    const composerPreviewEl = document.getElementById("composer-preview");
     const feedEl = document.getElementById("feed");
     const statusEl = document.getElementById("status");
 
     let currentUser = null;
     let profile = null;
+    let selectedMedia = null;
     const profileCache = new Map();
     const likedPostIds = new Set();
 
@@ -141,6 +173,54 @@
 
     function esc(value) {
         return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function extractMentions(text) {
+        const found = new Set();
+        const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
+        let match;
+        while ((match = regex.exec(text || "")) !== null) found.add(match[2].toLowerCase());
+        return [...found];
+    }
+
+    function renderMarkdown(text) {
+        let html = esc(text || "");
+        html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
+        html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+        html = html.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+        html = html.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+        html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+        html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+        html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        html = html.replace(/(^|[^\w])@([a-zA-Z0-9_]{3,30})\b/g, '$1<span class="mention">@$2</span>');
+        return html.replace(/\n/g, "<br>");
+    }
+
+    function renderComposerPreview() {
+        if (!selectedMedia) {
+            composerPreviewEl.hidden = true;
+            composerPreviewEl.innerHTML = "";
+            return;
+        }
+        const isImage = selectedMedia.file.type.startsWith("image/");
+        const mediaTag = isImage
+            ? `<img src="${esc(selectedMedia.previewUrl)}" alt="preview">`
+            : `<video src="${esc(selectedMedia.previewUrl)}" controls></video>`;
+        composerPreviewEl.innerHTML = `
+            <div class="preview-row">
+                <strong>${esc(selectedMedia.file.name)}</strong>
+                <button class="remove-media" id="remove-media" type="button">Remove</button>
+            </div>
+            ${mediaTag}
+        `;
+        composerPreviewEl.hidden = false;
+        document.getElementById("remove-media").addEventListener("click", () => {
+            URL.revokeObjectURL(selectedMedia.previewUrl);
+            selectedMedia = null;
+            mediaInputEl.value = "";
+            renderComposerPreview();
+        });
     }
 
     function badgeHtml(verifiedType, verifiedBy) {
@@ -243,21 +323,38 @@
     async function publishTweet() {
         if (!currentUser || !profile) return;
         const text = inputEl.value.trim();
-        if (!text) return;
+        if (!text && !selectedMedia) return;
 
         sendEl.disabled = true;
         statusEl.textContent = "Posting...";
         try {
+            let mediaUrl = "";
+            let mediaType = "";
+            if (selectedMedia) {
+                const safeName = selectedMedia.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+                const mediaRef = ref(storage, `messages/${currentUser.uid}/${Date.now()}_${safeName}`);
+                await uploadBytes(mediaRef, selectedMedia.file);
+                mediaUrl = await getDownloadURL(mediaRef);
+                mediaType = selectedMedia.file.type || "application/octet-stream";
+            }
+
             await addDoc(collection(db, "messages"), {
                 authorUid: currentUser.uid,
                 authorName: profile.displayName,
                 authorUsername: profile.username,
                 authorInitials: profile.avatarInitials,
                 content: text,
+                mentions: extractMentions(text),
+                mediaUrl,
+                mediaType,
                 likes: 0,
                 createdAt: serverTimestamp()
             });
             inputEl.value = "";
+            if (selectedMedia) URL.revokeObjectURL(selectedMedia.previewUrl);
+            selectedMedia = null;
+            mediaInputEl.value = "";
+            renderComposerPreview();
             updateComposerState();
             statusEl.textContent = "";
         } catch (error) {
@@ -317,7 +414,8 @@
                             <span class="tweet-handle">@${esc(author.username || item.authorUsername || "node")}</span>
                             <span class="tweet-time">· ${esc(formatTime(item.createdAt))}</span>
                         </div>
-                        <div class="tweet-text">${esc(item.content || "")}</div>
+                        <div class="tweet-text">${renderMarkdown(item.content || "")}</div>
+                        ${(item.mediaUrl && item.mediaType) ? `<div class="tweet-media">${item.mediaType.startsWith("image/") ? `<img src="${esc(item.mediaUrl)}" alt="Attachment">` : `<video controls src="${esc(item.mediaUrl)}"></video>`}</div>` : ""}
                         <div class="tweet-footer">
                             <button class="delete-btn" style="background:${liked ? '#dbf0ff' : '#eef3f8'};color:${liked ? '#1d9bf0' : '#32506a'}" onclick="void(0)" data-like-id="${esc(item.id)}">Like ${Number(item.likes || 0)}</button>
                             ${canDelete ? `<button class="delete-btn" onclick="deleteTweet('${esc(item.id)}')">Delete</button>` : ""}
@@ -341,6 +439,22 @@
     }
 
     inputEl.addEventListener("input", updateComposerState);
+    mediaPickEl.addEventListener("click", () => mediaInputEl.click());
+    mediaInputEl.addEventListener("change", () => {
+        const file = mediaInputEl.files?.[0];
+        if (!file) return;
+        const maxSize = file.type.startsWith("video/") ? 20 * 1024 * 1024 : 8 * 1024 * 1024;
+        if (file.size > maxSize) {
+            statusEl.textContent = file.type.startsWith("video/")
+                ? "Video too large (max 20 MB)."
+                : "Image too large (max 8 MB).";
+            mediaInputEl.value = "";
+            return;
+        }
+        if (selectedMedia) URL.revokeObjectURL(selectedMedia.previewUrl);
+        selectedMedia = { file, previewUrl: URL.createObjectURL(file) };
+        renderComposerPreview();
+    });
     sendEl.addEventListener("click", publishTweet);
 
     document.getElementById("logout").addEventListener("click", async () => {

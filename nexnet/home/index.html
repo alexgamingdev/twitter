@@ -73,6 +73,52 @@
             color: var(--accent);
             border: 1px solid rgba(0,229,255,0.2);
         }
+        .composer-preview {
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+        }
+        .composer-preview img, .composer-preview video {
+            width: 100%;
+            max-height: 280px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+        .mention {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .post-content h1, .post-content h2, .post-content h3 {
+            color: #fff;
+            margin: 10px 0 4px;
+            line-height: 1.2;
+        }
+        .post-content h1 { font-size: 1.1rem; }
+        .post-content h2 { font-size: 1rem; }
+        .post-content h3 { font-size: 0.95rem; }
+        .post-content code {
+            background: rgba(255,255,255,0.08);
+            border-radius: 6px;
+            padding: 2px 5px;
+            font-family: "Fira Code", monospace;
+            font-size: 0.78rem;
+        }
+        .post-content pre {
+            background: rgba(0,0,0,0.45);
+            border: 1px solid rgba(0,229,255,0.15);
+            border-radius: 10px;
+            padding: 10px;
+            overflow: auto;
+            margin: 8px 0;
+        }
+        .post-content pre code { background: transparent; padding: 0; }
+        .post-content a { color: var(--accent); text-decoration: none; }
+        .post-content a:hover { text-decoration: underline; }
+        .post-media { margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+        .post-media img, .post-media video { width: 100%; max-height: 380px; object-fit: cover; display: block; }
     </style>
 </head>
 <body>
@@ -134,9 +180,15 @@
                     <div id="compose-avatar" class="avatar">?</div>
                     <textarea id="compose-input" class="flex-1 bg-transparent text-sm resize-none text-white placeholder-[rgba(255,255,255,0.25)] outline-none" rows="2" placeholder="Broadcast to the network..."></textarea>
                 </div>
-                <div class="flex justify-end mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05)">
+                <div class="flex items-center justify-between mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05)">
+                    <div class="flex items-center gap-2">
+                        <button id="compose-media-btn" type="button" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-colors" style="border-color: rgba(0,229,255,0.25); color: var(--accent); background: rgba(0,229,255,0.08);">Add image/video</button>
+                        <span class="text-[10px] mono" style="color:var(--text-dim)">Markdown + @mentions</span>
+                        <input id="compose-media-input" type="file" accept="image/*,video/*" hidden>
+                    </div>
                     <button id="compose-btn" class="btn-nexus text-xs py-2 px-5">Transmit</button>
                 </div>
+                <div id="compose-preview" class="composer-preview hidden"></div>
             </div>
 
             <!-- Feed Posts — populated in real-time from Firestore -->
@@ -177,19 +229,27 @@
                  query, orderBy, serverTimestamp, doc, getDoc, getDocs, updateDoc, increment,
                  where, writeBatch, setDoc }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
         import { firebaseConfig, profileFromEmail, verifiedBadgeHtml }
             from "/js/firebase-config.js";
 
         const app  = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db   = getFirestore(app);
+        const storage = getStorage(app);
 
         let currentUser    = null;
         let currentProfile = null;
+        let selectedMedia  = null;
 
         // ── Per-session caches ────────────────────────────────────────────────
         const profileCache = new Map();  // uid → Firestore profile data
         const likedPostIds = new Set();  // post IDs already liked by currentUser
+
+        const composeMediaBtn   = document.getElementById('compose-media-btn');
+        const composeMediaInput = document.getElementById('compose-media-input');
+        const composePreview    = document.getElementById('compose-preview');
 
         // Fetch and cache Firestore profiles for a list of UIDs (missing only)
         async function fetchProfiles(uids) {
@@ -328,6 +388,7 @@
                     </div>
                 </div>
                 <p class="text-sm leading-relaxed post-content" style="color:var(--text-dim)"></p>
+                <div class="post-media hidden"></div>
                 <div class="flex gap-4 mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.04)">
                     <button data-post-id="${id}" class="like-btn text-[11px] font-semibold hover:opacity-70 transition-opacity"
                             style="color:${liked ? 'var(--accent)' : 'var(--text-dim)'}">↑ <span class="like-count">${data.likes || 0}</span></button>
@@ -348,7 +409,17 @@
                 avatarLink.textContent = avatarInitials;
             }
 
-            card.querySelector('.post-content').textContent = data.content;
+            card.querySelector('.post-content').innerHTML = renderMarkdown(data.content || '');
+
+            if (data.mediaUrl && data.mediaType) {
+                const mediaWrap = card.querySelector('.post-media');
+                mediaWrap.classList.remove('hidden');
+                if (String(data.mediaType).startsWith('image/')) {
+                    mediaWrap.innerHTML = `<img src="${esc(data.mediaUrl)}" alt="Attachment">`;
+                } else {
+                    mediaWrap.innerHTML = `<video controls src="${esc(data.mediaUrl)}"></video>`;
+                }
+            }
 
             card.querySelector('.like-btn').addEventListener('click', async (e) => {
                 const likeBtn = e.currentTarget;
@@ -390,28 +461,61 @@
         }
 
         // ── Compose ───────────────────────────────────────────────────────────
+        composeMediaBtn.addEventListener('click', () => composeMediaInput.click());
+
+        composeMediaInput.addEventListener('change', () => {
+            const file = composeMediaInput.files?.[0];
+            if (!file) return;
+            const maxSize = file.type.startsWith('video/') ? 20 * 1024 * 1024 : 8 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert(file.type.startsWith('video/') ? 'Video too large (max 20 MB).' : 'Image too large (max 8 MB).');
+                composeMediaInput.value = '';
+                return;
+            }
+            if (selectedMedia) URL.revokeObjectURL(selectedMedia.previewUrl);
+            selectedMedia = { file, previewUrl: URL.createObjectURL(file) };
+            renderComposerPreview();
+        });
+
         document.getElementById('compose-btn').addEventListener('click', async () => {
             if (!currentUser || !currentProfile) return;
 
             const input = document.getElementById('compose-input');
             const text  = input.value.trim();
-            if (!text) return;
+            if (!text && !selectedMedia) return;
 
             const btn = document.getElementById('compose-btn');
             btn.disabled    = true;
             btn.textContent = "Transmitting...";
 
             try {
+                let mediaUrl = '';
+                let mediaType = '';
+                if (selectedMedia) {
+                    const safeName = selectedMedia.file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                    const mediaRef = ref(storage, `messages/${currentUser.uid}/${Date.now()}_${safeName}`);
+                    await uploadBytes(mediaRef, selectedMedia.file);
+                    mediaUrl = await getDownloadURL(mediaRef);
+                    mediaType = selectedMedia.file.type || 'application/octet-stream';
+                }
+
                 await addDoc(collection(db, "messages"), {
                     authorUid:      currentUser.uid,
                     authorName:     currentProfile.displayName,
                     authorUsername: currentProfile.username,
                     authorInitials: currentProfile.avatarInitials,
                     content:        text,
+                    mentions:       extractMentions(text),
+                    mediaUrl,
+                    mediaType,
                     likes:          0,
                     createdAt:      serverTimestamp()
                 });
                 input.value = '';
+                if (selectedMedia) URL.revokeObjectURL(selectedMedia.previewUrl);
+                selectedMedia = null;
+                composeMediaInput.value = '';
+                renderComposerPreview();
             } finally {
                 btn.disabled    = false;
                 btn.textContent = "Transmit";
@@ -423,6 +527,51 @@
             const d = document.createElement('div');
             d.textContent = str || '';
             return d.innerHTML;
+        }
+
+        function extractMentions(text) {
+            const out = new Set();
+            const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
+            let m;
+            while ((m = regex.exec(text || '')) !== null) out.add(m[2].toLowerCase());
+            return [...out];
+        }
+
+        function renderMarkdown(text) {
+            let html = esc(text || '');
+            html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
+            html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+            html = html.replace(/(^|[^\w])@([a-zA-Z0-9_]{3,30})\b/g, '$1<span class="mention">@$2</span>');
+            return html.replace(/\n/g, '<br>');
+        }
+
+        function renderComposerPreview() {
+            if (!selectedMedia) {
+                composePreview.classList.add('hidden');
+                composePreview.innerHTML = '';
+                return;
+            }
+            const isImage = selectedMedia.file.type.startsWith('image/');
+            composePreview.innerHTML = `
+                <div class="flex items-center justify-between text-[11px] mb-1" style="color:var(--text-dim)">
+                    <strong style="color:#fff">${esc(selectedMedia.file.name)}</strong>
+                    <button id="remove-compose-media" type="button" class="px-2 py-1 rounded-full" style="background: rgba(255,80,80,0.15); color: #ff7d7d;">Remove</button>
+                </div>
+                ${isImage ? `<img src="${esc(selectedMedia.previewUrl)}" alt="preview">` : `<video controls src="${esc(selectedMedia.previewUrl)}"></video>`}
+            `;
+            composePreview.classList.remove('hidden');
+            document.getElementById('remove-compose-media').addEventListener('click', () => {
+                URL.revokeObjectURL(selectedMedia.previewUrl);
+                selectedMedia = null;
+                composeMediaInput.value = '';
+                renderComposerPreview();
+            });
         }
 
         function timeAgo(date) {
