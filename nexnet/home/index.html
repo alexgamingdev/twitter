@@ -48,6 +48,20 @@
         .compose-box:focus-within {
             border-color: rgba(0,229,255,0.3);
         }
+        .compose-fields { display: grid; gap: 10px; }
+        .compose-box textarea,
+        .compose-box input[type="url"] {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.28);
+            color: #fff;
+            outline: none;
+            padding: 0.9rem 1rem;
+        }
+        .compose-box input[type="url"]:focus,
+        .compose-box textarea:focus { border-color: rgba(0,229,255,0.35); }
+        .compose-note { margin-top: 8px; color: var(--text-dim); font-size: 0.75rem; }
         .sidebar-item {
             display: flex;
             align-items: center;
@@ -73,64 +87,18 @@
             color: var(--accent);
             border: 1px solid rgba(0,229,255,0.2);
         }
-        .mention {
-            color: var(--accent);
-            font-weight: 700;
-        }
-        .post-content h1, .post-content h2, .post-content h3 {
-            color: #fff;
-            margin: 10px 0 4px;
-            line-height: 1.2;
-        }
+        .post-content h1, .post-content h2, .post-content h3 { margin: 10px 0 4px; line-height: 1.2; color: #fff; }
         .post-content h1 { font-size: 1.1rem; }
         .post-content h2 { font-size: 1rem; }
         .post-content h3 { font-size: 0.95rem; }
-        .post-content code {
-            background: rgba(255,255,255,0.08);
-            border-radius: 6px;
-            padding: 2px 5px;
-            font-family: "Fira Code", monospace;
-            font-size: 0.78rem;
-        }
-        .post-content pre {
-            background: rgba(0,0,0,0.45);
-            border: 1px solid rgba(0,229,255,0.15);
-            border-radius: 10px;
-            padding: 10px;
-            overflow: auto;
-            margin: 8px 0;
-        }
-        .post-content pre code { background: transparent; padding: 0; }
+        .post-content code { background: rgba(0,229,255,0.08); border-radius: 6px; padding: 2px 5px; font-family: "Fira Code", monospace; }
+        .post-content pre { background: rgba(0,0,0,0.55); padding: 10px; border-radius: 10px; overflow: auto; }
         .post-content a { color: var(--accent); text-decoration: none; }
         .post-content a:hover { text-decoration: underline; }
+        .post-content .mention { color: var(--accent); font-weight: 700; }
         .post-content .mention-link { color: var(--accent); font-weight: 700; text-decoration: none; }
-        .mention-suggestions {
-            position: absolute;
-            left: 20px;
-            right: 20px;
-            top: 128px;
-            z-index: 30;
-            background: rgba(5,5,5,0.98);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.35);
-            overflow: hidden;
-        }
-        .mention-suggestion {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border: none;
-            background: transparent;
-            color: #fff;
-            cursor: pointer;
-            text-align: left;
-        }
-        .mention-suggestion:hover { background: rgba(0,229,255,0.08); }
-        .mention-suggestion .name { font-weight: 800; }
-        .mention-suggestion .handle { font-size: 12px; color: var(--text-dim); }
+        .post-media { margin-top: 12px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.4); }
+        .post-media img, .post-media video { width: 100%; display: block; max-height: 420px; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -190,11 +158,13 @@
             <div class="compose-box mb-6">
                 <div class="flex gap-3 items-start">
                     <div id="compose-avatar" class="avatar">?</div>
-                    <textarea id="compose-input" class="flex-1 bg-transparent text-sm resize-none text-white placeholder-[rgba(255,255,255,0.25)] outline-none" rows="2" placeholder="Broadcast to the network..."></textarea>
+                    <div class="compose-fields flex-1">
+                        <textarea id="compose-input" class="bg-transparent text-sm resize-none text-white placeholder-[rgba(255,255,255,0.25)] outline-none" rows="2" placeholder="Broadcast to the network..."></textarea>
+                        <input id="compose-media-url" type="url" placeholder="Bild- oder Video-URL (optional)">
+                    </div>
                 </div>
-                <div id="mention-suggestions" class="mention-suggestions hidden"></div>
-                <div class="flex items-center justify-between mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05)">
-                    <span class="text-[10px] mono" style="color:var(--text-dim)">Markdown + @mentions</span>
+                <div class="compose-note">Markdown + @mentions + Bild/Video-URL unterstützt</div>
+                <div class="flex justify-end mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05)">
                     <button id="compose-btn" class="btn-nexus text-xs py-2 px-5">Transmit</button>
                 </div>
             </div>
@@ -234,8 +204,8 @@
         import { getAuth, onAuthStateChanged, signOut }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot,
-                  query, orderBy, serverTimestamp, doc, getDoc, getDocs, updateDoc, increment,
-                  where, writeBatch, setDoc, startAt, endAt, limit }
+                 query, orderBy, serverTimestamp, doc, getDoc, getDocs, updateDoc, increment,
+                 where, writeBatch, setDoc }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { firebaseConfig, profileFromEmail, verifiedBadgeHtml }
             from "/js/firebase-config.js";
@@ -247,14 +217,10 @@
         let currentUser    = null;
         let currentProfile = null;
         const mentionCache = new Map();
-        let mentionTimer   = null;
 
         // ── Per-session caches ────────────────────────────────────────────────
         const profileCache = new Map();  // uid → Firestore profile data
         const likedPostIds = new Set();  // post IDs already liked by currentUser
-
-        const inputEl = document.getElementById('compose-input');
-        const mentionSuggestionsEl = document.getElementById('mention-suggestions');
 
         // Fetch and cache Firestore profiles for a list of UIDs (missing only)
         async function fetchProfiles(uids) {
@@ -278,114 +244,44 @@
             } catch (_) {}
         }
 
-        function fallbackProfile(user) {
-            const baseName = (user.displayName || (user.email || '').split('@')[0] || 'Node');
-            return {
-                uid: user.uid,
-                email: user.email || '',
-                username: profileFromEmail(user.email || '', user.uid).username,
-                displayName: baseName,
-                avatarInitials: baseName.slice(0, 2).toUpperCase(),
-                bio: '',
-                verified: false,
-                verifiedType: ''
-            };
-        }
-
         async function fetchMentionProfiles(usernames) {
             const missing = usernames
                 .map((name) => name.toLowerCase())
                 .filter((name) => name && !mentionCache.has(name));
             if (!missing.length) return;
 
-            const batches = [];
             for (let i = 0; i < missing.length; i += 10) {
-                batches.push(missing.slice(i, i + 10));
-            }
-
-            await Promise.all(batches.map(async (batch) => {
+                const batch = missing.slice(i, i + 10);
                 const q = query(collection(db, "users"), where("username", "in", batch));
                 const snap = await getDocs(q);
                 snap.forEach((d) => {
                     const data = d.data();
                     if (data.username) mentionCache.set(String(data.username).toLowerCase(), { uid: d.id, ...data });
                 });
-            }));
-        }
-
-        function getMentionToken(value, cursorPos) {
-            const before = value.slice(0, cursorPos);
-            const match = before.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
-            return match ? match[1] : "";
-        }
-
-        function hideMentionSuggestions() {
-            mentionSuggestionsEl.innerHTML = '';
-            mentionSuggestionsEl.classList.add('hidden');
-        }
-
-        function insertMention(username) {
-            const start = inputEl.selectionStart;
-            const end = inputEl.selectionEnd;
-            const before = inputEl.value.slice(0, start);
-            const after = inputEl.value.slice(end);
-            const tokenStart = before.lastIndexOf('@');
-            if (tokenStart < 0) return;
-            inputEl.value = `${before.slice(0, tokenStart)}@${username} ${after}`;
-            inputEl.focus();
-            const caret = tokenStart + username.length + 2;
-            inputEl.setSelectionRange(caret, caret);
-            hideMentionSuggestions();
-        }
-
-        async function updateMentionSuggestions() {
-            const token = getMentionToken(inputEl.value, inputEl.selectionStart || 0);
-            if (!token) {
-                hideMentionSuggestions();
-                return;
             }
+        }
 
-            try {
-                const q = query(
-                    collection(db, "users"),
-                    orderBy("username"),
-                    startAt(token.toLowerCase()),
-                    endAt(`${token.toLowerCase()}\uf8ff`),
-                    limit(5)
-                );
-                const snap = await getDocs(q);
-                const users = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
-                if (!users.length) {
-                    hideMentionSuggestions();
-                    return;
-                }
+        function detectMediaKind(url) {
+            const clean = String(url || '').toLowerCase().split('?')[0].split('#')[0];
+            if (/\.(mp4|webm|ogg)$/.test(clean)) return 'video';
+            return 'image';
+        }
 
-                mentionSuggestionsEl.innerHTML = users.map((user) => `
-                    <button type="button" class="mention-suggestion" data-username="${user.username || ''}">
-                        <div>
-                            <div class="name">${user.displayName || user.username || 'User'}</div>
-                            <div class="handle">@${user.username || 'node'}</div>
-                        </div>
-                    </button>
-                `).join('');
-                mentionSuggestionsEl.classList.remove('hidden');
-                mentionSuggestionsEl.querySelectorAll('[data-username]').forEach((btn) => {
-                    btn.addEventListener('mousedown', (event) => {
-                        event.preventDefault();
-                        insertMention(btn.getAttribute('data-username'));
-                    });
-                });
-            } catch (_) {
-                hideMentionSuggestions();
+        function renderMedia(url, kind) {
+            if (!url) return '';
+            const safeUrl = encodeURI(String(url));
+            if ((kind || detectMediaKind(url)) === 'video') {
+                return `<div class="post-media"><video controls preload="metadata" src="${safeUrl}"></video></div>`;
             }
+            return `<div class="post-media"><img src="${safeUrl}" alt="Attached media"></div>`;
         }
 
         function extractMentions(text) {
-            const out = new Set();
+            const found = new Set();
             const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
-            let m;
-            while ((m = regex.exec(text || '')) !== null) out.add(m[2].toLowerCase());
-            return [...out];
+            let match;
+            while ((match = regex.exec(text || '')) !== null) found.add(match[2].toLowerCase());
+            return [...found];
         }
 
         function renderMarkdown(text, mentionLookup = mentionCache) {
@@ -414,69 +310,56 @@
                 window.location.replace("/login/");
                 return;
             }
+            if (!user.emailVerified) {
+                const bypassSnap = await getDoc(doc(db, "users", user.uid));
+                if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
+                    window.location.replace("/verify-email/");
+                    return;
+                }
+            }
             currentUser = user;
-            currentProfile = fallbackProfile(user);
 
-            // Paint the basic UI immediately so it never gets stuck on Loading.
+            // Load profile from Firestore
+            const profileSnap = await getDoc(doc(db, "users", user.uid));
+            if (profileSnap.exists()) {
+                currentProfile = profileSnap.data();
+            } else {
+                // Profile doc missing (e.g. created before the registration fix).
+                // Auto-create it from Firebase Auth data so Settings can update it.
+                // Append a UID suffix to the email-derived username to avoid collisions.
+                const derived = profileFromEmail(user.email);
+                derived.username = derived.username + '_' + user.uid.slice(0, 12);
+                currentProfile = { uid: user.uid, email: user.email, ...derived, verified: false };
+                await setDoc(doc(db, "users", user.uid), {
+                    ...currentProfile,
+                    createdAt: serverTimestamp()
+                });
+            }
+
+            // Populate "Your Node" sidebar
             const nodeLink = document.getElementById('node-name-link');
             nodeLink.textContent = currentProfile.username;
             nodeLink.href        = `/profile/?uid=${encodeURIComponent(user.uid)}`;
 
+            // Show actual profile picture in compose box if available
             const composeAvatar = document.getElementById('compose-avatar');
-            composeAvatar.textContent = currentProfile.avatarInitials;
-            renderProfileCard(0);
-
-            try {
-                if (!user.emailVerified) {
-                    const bypassSnap = await getDoc(doc(db, "users", user.uid));
-                    if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
-                        window.location.replace("/verify-email/");
-                        return;
-                    }
-                }
-
-                // Load profile from Firestore
-                const profileSnap = await getDoc(doc(db, "users", user.uid));
-                if (profileSnap.exists()) {
-                    currentProfile = profileSnap.data();
-                } else {
-                    // Profile doc missing (e.g. created before the registration fix).
-                    // Auto-create it from Firebase Auth data so Settings can update it.
-                    // Append a UID suffix to the email-derived username to avoid collisions.
-                    const derived = profileFromEmail(user.email);
-                    derived.username = derived.username + '_' + user.uid.slice(0, 12);
-                    currentProfile = { uid: user.uid, email: user.email, ...derived, verified: false };
-                    await setDoc(doc(db, "users", user.uid), {
-                        ...currentProfile,
-                        createdAt: serverTimestamp()
-                    });
-                }
-
-                // Refresh the visible UI with Firestore data once it arrives.
-                nodeLink.textContent = currentProfile.username;
-
-                if (currentProfile.avatarUrl) {
-                    composeAvatar.style.background = 'none';
-                    composeAvatar.style.padding    = '0';
-                    composeAvatar.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.className = 'w-full h-full rounded-full object-cover';
-                    img.alt       = '';
-                    img.src       = currentProfile.avatarUrl;
-                    composeAvatar.appendChild(img);
-                } else {
-                    composeAvatar.textContent = currentProfile.avatarInitials;
-                }
-            } catch (error) {
-                console.warn('Profile load fallback:', error);
+            if (currentProfile.avatarUrl) {
+                composeAvatar.style.background = 'none';
+                composeAvatar.style.padding    = '0';
+                const img = document.createElement('img');
+                img.className = 'w-full h-full rounded-full object-cover';
+                img.alt       = '';
+                img.src       = currentProfile.avatarUrl;
+                composeAvatar.appendChild(img);
+            } else {
+                composeAvatar.textContent = currentProfile.avatarInitials;
             }
 
             // Wire logout button
             document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
             // Load the posts this user has already liked
-            loadLikedPostIds().catch((err) => { console.warn('likes load failed', err); });
-            renderProfileCard(0);
+            await loadLikedPostIds();
 
             // ── Real-time Feed (messages collection) ──────────────────────────
             const postsQuery = query(
@@ -488,6 +371,7 @@
                 // Fetch live profiles for all authors in one batch
                 const authorUids = [...new Set(snapshot.docs.map(d => d.data().authorUid).filter(Boolean))];
                 const mentionUsernames = [...new Set(snapshot.docs.flatMap((d) => d.data().mentions && d.data().mentions.length ? d.data().mentions : extractMentions(d.data().content || '')) )];
+                await fetchProfiles(authorUids);
 
                 const feed = document.getElementById('feed');
                 feed.innerHTML = '';
@@ -559,6 +443,9 @@
             }
 
             card.querySelector('.post-content').innerHTML = renderMarkdown(data.content || '');
+            if (data.mediaUrl) {
+                card.querySelector('.post-content').insertAdjacentHTML('afterend', renderMedia(data.mediaUrl, data.mediaType));
+            }
 
             card.querySelector('.like-btn').addEventListener('click', async (e) => {
                 const likeBtn = e.currentTarget;
@@ -599,10 +486,13 @@
             return card;
         }
 
+        // ── Compose ───────────────────────────────────────────────────────────
         document.getElementById('compose-btn').addEventListener('click', async () => {
             if (!currentUser || !currentProfile) return;
 
-            const text  = inputEl.value.trim();
+            const input = document.getElementById('compose-input');
+            const text  = input.value.trim();
+            const mediaUrl = document.getElementById('compose-media-url').value.trim();
             if (!text) return;
 
             const btn = document.getElementById('compose-btn');
@@ -616,12 +506,13 @@
                     authorUsername: currentProfile.username,
                     authorInitials: currentProfile.avatarInitials,
                     content:        text,
-                    mentions:       extractMentions(text),
+                    mediaUrl:       mediaUrl,
+                    mediaType:      mediaUrl ? detectMediaKind(mediaUrl) : '',
                     likes:          0,
                     createdAt:      serverTimestamp()
                 });
-                inputEl.value = '';
-                hideMentionSuggestions();
+                input.value = '';
+                document.getElementById('compose-media-url').value = '';
             } finally {
                 btn.disabled    = false;
                 btn.textContent = "Transmit";
@@ -634,18 +525,6 @@
             d.textContent = str || '';
             return d.innerHTML;
         }
-
-        inputEl.addEventListener('input', updateComposerState);
-        inputEl.addEventListener('input', () => {
-            clearTimeout(mentionTimer);
-            mentionTimer = setTimeout(updateMentionSuggestions, 180);
-        });
-        inputEl.addEventListener('keyup', () => {
-            clearTimeout(mentionTimer);
-            mentionTimer = setTimeout(updateMentionSuggestions, 180);
-        });
-        inputEl.addEventListener('click', updateMentionSuggestions);
-        inputEl.addEventListener('blur', () => setTimeout(hideMentionSuggestions, 150));
 
         function timeAgo(date) {
             const diff = Math.floor((Date.now() - date.getTime()) / 1000);
