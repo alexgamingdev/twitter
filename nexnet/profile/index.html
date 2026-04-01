@@ -90,6 +90,8 @@
             background: rgba(0,229,255,0.08);
             color: var(--accent);
         }
+        .post-content .mention-link { color: var(--accent); font-weight: 700; text-decoration: none; }
+        .post-content .mention { color: var(--accent); font-weight: 700; }
     </style>
 </head>
 <body>
@@ -262,6 +264,52 @@
         const app  = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db   = getFirestore(app);
+        const mentionCache = new Map();
+
+        function extractMentions(text) {
+            const out = new Set();
+            const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
+            let m;
+            while ((m = regex.exec(text || '')) !== null) out.add(m[2].toLowerCase());
+            return [...out];
+        }
+
+        async function fetchMentionProfiles(usernames) {
+            const missing = usernames
+                .map((name) => name.toLowerCase())
+                .filter((name) => name && !mentionCache.has(name));
+            if (!missing.length) return;
+
+            for (let i = 0; i < missing.length; i += 10) {
+                const batch = missing.slice(i, i + 10);
+                const q = query(collection(db, "users"), where("username", "in", batch));
+                const snap = await getDocs(q);
+                snap.forEach((d) => {
+                    const data = d.data();
+                    if (data.username) mentionCache.set(String(data.username).toLowerCase(), { uid: d.id, ...data });
+                });
+            }
+        }
+
+        function renderMarkdown(text) {
+            let html = esc(text || '');
+            html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
+            html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+            html = html.replace(/(^|[^\w])@([a-zA-Z0-9_]{3,30})\b/g, (full, prefix, username) => {
+                const user = mentionCache.get(username.toLowerCase());
+                if (user?.uid) {
+                    return `${prefix}<a class="mention-link" href="/profile/?uid=${encodeURIComponent(user.uid)}">@${user.username}</a>`;
+                }
+                return `${prefix}<span class="mention">@${username}</span>`;
+            });
+            return html.replace(/\n/g, '<br>');
+        }
 
         // ── Read target UID from query string ──────────────────────────────────
         const params    = new URLSearchParams(window.location.search);
@@ -398,7 +446,11 @@
                     panel.innerHTML = '<p class="text-center text-xs mono py-6" style="color:var(--text-dim)">No posts yet.</p>';
                     return;
                 }
-                snapshot.forEach(s => panel.appendChild(buildCard(s.id, s.data())));
+                const mentions = [...new Set(snapshot.docs.flatMap((d) => d.data().mentions?.length ? d.data().mentions : extractMentions(d.data().content || '')) )];
+                fetchMentionProfiles(mentions).then(() => {
+                    panel.innerHTML = '';
+                    snapshot.forEach(s => panel.appendChild(buildCard(s.id, s.data())));
+                });
             });
         }
 
@@ -416,7 +468,7 @@
                 <p class="text-sm leading-relaxed post-body" style="color:var(--text-dim)"></p>
                 <p class="text-[11px] mt-3" style="color:var(--text-dim)">↑ ${data.likes || 0} likes</p>
             `;
-            card.querySelector('.post-body').textContent = data.content;
+            card.querySelector('.post-body').innerHTML = renderMarkdown(data.content || '');
 
             if (isOwnProfile) {
                 card.querySelector('.delete-btn').addEventListener('click', async () => {

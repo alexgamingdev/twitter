@@ -73,20 +73,6 @@
             color: var(--accent);
             border: 1px solid rgba(0,229,255,0.2);
         }
-        .composer-preview {
-            margin-top: 10px;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 10px;
-            background: rgba(255,255,255,0.03);
-        }
-        .composer-preview img, .composer-preview video {
-            width: 100%;
-            max-height: 280px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin-top: 8px;
-        }
         .mention {
             color: var(--accent);
             font-weight: 700;
@@ -117,8 +103,34 @@
         .post-content pre code { background: transparent; padding: 0; }
         .post-content a { color: var(--accent); text-decoration: none; }
         .post-content a:hover { text-decoration: underline; }
-        .post-media { margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
-        .post-media img, .post-media video { width: 100%; max-height: 380px; object-fit: cover; display: block; }
+        .post-content .mention-link { color: var(--accent); font-weight: 700; text-decoration: none; }
+        .mention-suggestions {
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            top: 128px;
+            z-index: 30;
+            background: rgba(5,5,5,0.98);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+            overflow: hidden;
+        }
+        .mention-suggestion {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            text-align: left;
+        }
+        .mention-suggestion:hover { background: rgba(0,229,255,0.08); }
+        .mention-suggestion .name { font-weight: 800; }
+        .mention-suggestion .handle { font-size: 12px; color: var(--text-dim); }
     </style>
 </head>
 <body>
@@ -180,15 +192,11 @@
                     <div id="compose-avatar" class="avatar">?</div>
                     <textarea id="compose-input" class="flex-1 bg-transparent text-sm resize-none text-white placeholder-[rgba(255,255,255,0.25)] outline-none" rows="2" placeholder="Broadcast to the network..."></textarea>
                 </div>
+                <div id="mention-suggestions" class="mention-suggestions hidden"></div>
                 <div class="flex items-center justify-between mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05)">
-                    <div class="flex items-center gap-2">
-                        <button id="compose-media-btn" type="button" class="text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-colors" style="border-color: rgba(0,229,255,0.25); color: var(--accent); background: rgba(0,229,255,0.08);">Add image/video</button>
-                        <span class="text-[10px] mono" style="color:var(--text-dim)">Markdown + @mentions</span>
-                        <input id="compose-media-input" type="file" accept="image/*,video/*" hidden>
-                    </div>
+                    <span class="text-[10px] mono" style="color:var(--text-dim)">Markdown + @mentions</span>
                     <button id="compose-btn" class="btn-nexus text-xs py-2 px-5">Transmit</button>
                 </div>
-                <div id="compose-preview" class="composer-preview hidden"></div>
             </div>
 
             <!-- Feed Posts — populated in real-time from Firestore -->
@@ -226,30 +234,27 @@
         import { getAuth, onAuthStateChanged, signOut }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot,
-                 query, orderBy, serverTimestamp, doc, getDoc, getDocs, updateDoc, increment,
-                 where, writeBatch, setDoc }
+                  query, orderBy, serverTimestamp, doc, getDoc, getDocs, updateDoc, increment,
+                  where, writeBatch, setDoc, startAt, endAt, limit }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL }
-            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
         import { firebaseConfig, profileFromEmail, verifiedBadgeHtml }
             from "/js/firebase-config.js";
 
         const app  = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db   = getFirestore(app);
-        const storage = getStorage(app);
 
         let currentUser    = null;
         let currentProfile = null;
-        let selectedMedia  = null;
+        const mentionCache = new Map();
+        let mentionTimer   = null;
 
         // ── Per-session caches ────────────────────────────────────────────────
         const profileCache = new Map();  // uid → Firestore profile data
         const likedPostIds = new Set();  // post IDs already liked by currentUser
 
-        const composeMediaBtn   = document.getElementById('compose-media-btn');
-        const composeMediaInput = document.getElementById('compose-media-input');
-        const composePreview    = document.getElementById('compose-preview');
+        const inputEl = document.getElementById('compose-input');
+        const mentionSuggestionsEl = document.getElementById('mention-suggestions');
 
         // Fetch and cache Firestore profiles for a list of UIDs (missing only)
         async function fetchProfiles(uids) {
@@ -271,6 +276,122 @@
                 const snap = await getDocs(q);
                 snap.forEach(d => likedPostIds.add(d.data().postId));
             } catch (_) {}
+        }
+
+        async function fetchMentionProfiles(usernames) {
+            const missing = usernames
+                .map((name) => name.toLowerCase())
+                .filter((name) => name && !mentionCache.has(name));
+            if (!missing.length) return;
+
+            const batches = [];
+            for (let i = 0; i < missing.length; i += 10) {
+                batches.push(missing.slice(i, i + 10));
+            }
+
+            await Promise.all(batches.map(async (batch) => {
+                const q = query(collection(db, "users"), where("username", "in", batch));
+                const snap = await getDocs(q);
+                snap.forEach((d) => {
+                    const data = d.data();
+                    if (data.username) mentionCache.set(String(data.username).toLowerCase(), { uid: d.id, ...data });
+                });
+            }));
+        }
+
+        function getMentionToken(value, cursorPos) {
+            const before = value.slice(0, cursorPos);
+            const match = before.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+            return match ? match[1] : "";
+        }
+
+        function hideMentionSuggestions() {
+            mentionSuggestionsEl.innerHTML = '';
+            mentionSuggestionsEl.classList.add('hidden');
+        }
+
+        function insertMention(username) {
+            const start = inputEl.selectionStart;
+            const end = inputEl.selectionEnd;
+            const before = inputEl.value.slice(0, start);
+            const after = inputEl.value.slice(end);
+            const tokenStart = before.lastIndexOf('@');
+            if (tokenStart < 0) return;
+            inputEl.value = `${before.slice(0, tokenStart)}@${username} ${after}`;
+            inputEl.focus();
+            const caret = tokenStart + username.length + 2;
+            inputEl.setSelectionRange(caret, caret);
+            hideMentionSuggestions();
+        }
+
+        async function updateMentionSuggestions() {
+            const token = getMentionToken(inputEl.value, inputEl.selectionStart || 0);
+            if (!token) {
+                hideMentionSuggestions();
+                return;
+            }
+
+            try {
+                const q = query(
+                    collection(db, "users"),
+                    orderBy("username"),
+                    startAt(token.toLowerCase()),
+                    endAt(`${token.toLowerCase()}\uf8ff`),
+                    limit(5)
+                );
+                const snap = await getDocs(q);
+                const users = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+                if (!users.length) {
+                    hideMentionSuggestions();
+                    return;
+                }
+
+                mentionSuggestionsEl.innerHTML = users.map((user) => `
+                    <button type="button" class="mention-suggestion" data-username="${user.username || ''}">
+                        <div>
+                            <div class="name">${user.displayName || user.username || 'User'}</div>
+                            <div class="handle">@${user.username || 'node'}</div>
+                        </div>
+                    </button>
+                `).join('');
+                mentionSuggestionsEl.classList.remove('hidden');
+                mentionSuggestionsEl.querySelectorAll('[data-username]').forEach((btn) => {
+                    btn.addEventListener('mousedown', (event) => {
+                        event.preventDefault();
+                        insertMention(btn.getAttribute('data-username'));
+                    });
+                });
+            } catch (_) {
+                hideMentionSuggestions();
+            }
+        }
+
+        function extractMentions(text) {
+            const out = new Set();
+            const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
+            let m;
+            while ((m = regex.exec(text || '')) !== null) out.add(m[2].toLowerCase());
+            return [...out];
+        }
+
+        function renderMarkdown(text, mentionLookup = mentionCache) {
+            let html = esc(text || '');
+            html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
+            html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+            html = html.replace(/(^|[^\w])@([a-zA-Z0-9_]{3,30})\b/g, (full, prefix, username) => {
+                const user = mentionLookup.get(username.toLowerCase());
+                if (user?.uid) {
+                    return `${prefix}<a class="mention-link" href="/profile/?uid=${encodeURIComponent(user.uid)}">@${user.username}</a>`;
+                }
+                return `${prefix}<span class="mention">@${username}</span>`;
+            });
+            return html.replace(/\n/g, '<br>');
         }
 
         // ── Auth Guard ────────────────────────────────────────────────────────
@@ -340,6 +461,8 @@
                 // Fetch live profiles for all authors in one batch
                 const authorUids = [...new Set(snapshot.docs.map(d => d.data().authorUid).filter(Boolean))];
                 await fetchProfiles(authorUids);
+                const mentionUsernames = [...new Set(snapshot.docs.flatMap((d) => d.data().mentions && d.data().mentions.length ? d.data().mentions : extractMentions(d.data().content || '')) )];
+                await fetchMentionProfiles(mentionUsernames);
 
                 const feed = document.getElementById('feed');
                 feed.innerHTML = '';
@@ -388,7 +511,6 @@
                     </div>
                 </div>
                 <p class="text-sm leading-relaxed post-content" style="color:var(--text-dim)"></p>
-                <div class="post-media hidden"></div>
                 <div class="flex gap-4 mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.04)">
                     <button data-post-id="${id}" class="like-btn text-[11px] font-semibold hover:opacity-70 transition-opacity"
                             style="color:${liked ? 'var(--accent)' : 'var(--text-dim)'}">↑ <span class="like-count">${data.likes || 0}</span></button>
@@ -410,16 +532,6 @@
             }
 
             card.querySelector('.post-content').innerHTML = renderMarkdown(data.content || '');
-
-            if (data.mediaUrl && data.mediaType) {
-                const mediaWrap = card.querySelector('.post-media');
-                mediaWrap.classList.remove('hidden');
-                if (String(data.mediaType).startsWith('image/')) {
-                    mediaWrap.innerHTML = `<img src="${esc(data.mediaUrl)}" alt="Attachment">`;
-                } else {
-                    mediaWrap.innerHTML = `<video controls src="${esc(data.mediaUrl)}"></video>`;
-                }
-            }
 
             card.querySelector('.like-btn').addEventListener('click', async (e) => {
                 const likeBtn = e.currentTarget;
@@ -460,45 +572,17 @@
             return card;
         }
 
-        // ── Compose ───────────────────────────────────────────────────────────
-        composeMediaBtn.addEventListener('click', () => composeMediaInput.click());
-
-        composeMediaInput.addEventListener('change', () => {
-            const file = composeMediaInput.files?.[0];
-            if (!file) return;
-            const maxSize = file.type.startsWith('video/') ? 20 * 1024 * 1024 : 8 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert(file.type.startsWith('video/') ? 'Video too large (max 20 MB).' : 'Image too large (max 8 MB).');
-                composeMediaInput.value = '';
-                return;
-            }
-            if (selectedMedia) URL.revokeObjectURL(selectedMedia.previewUrl);
-            selectedMedia = { file, previewUrl: URL.createObjectURL(file) };
-            renderComposerPreview();
-        });
-
         document.getElementById('compose-btn').addEventListener('click', async () => {
             if (!currentUser || !currentProfile) return;
 
-            const input = document.getElementById('compose-input');
-            const text  = input.value.trim();
-            if (!text && !selectedMedia) return;
+            const text  = inputEl.value.trim();
+            if (!text) return;
 
             const btn = document.getElementById('compose-btn');
             btn.disabled    = true;
             btn.textContent = "Transmitting...";
 
             try {
-                let mediaUrl = '';
-                let mediaType = '';
-                if (selectedMedia) {
-                    const safeName = selectedMedia.file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-                    const mediaRef = ref(storage, `messages/${currentUser.uid}/${Date.now()}_${safeName}`);
-                    await uploadBytes(mediaRef, selectedMedia.file);
-                    mediaUrl = await getDownloadURL(mediaRef);
-                    mediaType = selectedMedia.file.type || 'application/octet-stream';
-                }
-
                 await addDoc(collection(db, "messages"), {
                     authorUid:      currentUser.uid,
                     authorName:     currentProfile.displayName,
@@ -506,16 +590,11 @@
                     authorInitials: currentProfile.avatarInitials,
                     content:        text,
                     mentions:       extractMentions(text),
-                    mediaUrl,
-                    mediaType,
                     likes:          0,
                     createdAt:      serverTimestamp()
                 });
-                input.value = '';
-                if (selectedMedia) URL.revokeObjectURL(selectedMedia.previewUrl);
-                selectedMedia = null;
-                composeMediaInput.value = '';
-                renderComposerPreview();
+                inputEl.value = '';
+                hideMentionSuggestions();
             } finally {
                 btn.disabled    = false;
                 btn.textContent = "Transmit";
@@ -529,50 +608,17 @@
             return d.innerHTML;
         }
 
-        function extractMentions(text) {
-            const out = new Set();
-            const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
-            let m;
-            while ((m = regex.exec(text || '')) !== null) out.add(m[2].toLowerCase());
-            return [...out];
-        }
-
-        function renderMarkdown(text) {
-            let html = esc(text || '');
-            html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
-            html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
-            html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
-            html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-            html = html.replace(/(^|[^\w])@([a-zA-Z0-9_]{3,30})\b/g, '$1<span class="mention">@$2</span>');
-            return html.replace(/\n/g, '<br>');
-        }
-
-        function renderComposerPreview() {
-            if (!selectedMedia) {
-                composePreview.classList.add('hidden');
-                composePreview.innerHTML = '';
-                return;
-            }
-            const isImage = selectedMedia.file.type.startsWith('image/');
-            composePreview.innerHTML = `
-                <div class="flex items-center justify-between text-[11px] mb-1" style="color:var(--text-dim)">
-                    <strong style="color:#fff">${esc(selectedMedia.file.name)}</strong>
-                    <button id="remove-compose-media" type="button" class="px-2 py-1 rounded-full" style="background: rgba(255,80,80,0.15); color: #ff7d7d;">Remove</button>
-                </div>
-                ${isImage ? `<img src="${esc(selectedMedia.previewUrl)}" alt="preview">` : `<video controls src="${esc(selectedMedia.previewUrl)}"></video>`}
-            `;
-            composePreview.classList.remove('hidden');
-            document.getElementById('remove-compose-media').addEventListener('click', () => {
-                URL.revokeObjectURL(selectedMedia.previewUrl);
-                selectedMedia = null;
-                composeMediaInput.value = '';
-                renderComposerPreview();
-            });
-        }
+        inputEl.addEventListener('input', updateComposerState);
+        inputEl.addEventListener('input', () => {
+            clearTimeout(mentionTimer);
+            mentionTimer = setTimeout(updateMentionSuggestions, 180);
+        });
+        inputEl.addEventListener('keyup', () => {
+            clearTimeout(mentionTimer);
+            mentionTimer = setTimeout(updateMentionSuggestions, 180);
+        });
+        inputEl.addEventListener('click', updateMentionSuggestions);
+        inputEl.addEventListener('blur', () => setTimeout(hideMentionSuggestions, 150));
 
         function timeAgo(date) {
             const diff = Math.floor((Date.now() - date.getTime()) / 1000);

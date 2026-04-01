@@ -42,6 +42,8 @@
     .tweet-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
     .tweet-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .tweet-text { margin-top:4px; white-space:pre-wrap; line-height:1.45; }
+    .tweet-text .mention-link { color: var(--twitter-blue); font-weight: 700; text-decoration: none; }
+    .tweet-text .mention { color: var(--twitter-blue); font-weight: 700; }
     .tweet-footer { margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .like-btn { border:none; border-radius:999px; font-weight:700; cursor:pointer; padding:8px 12px; background:#eef3f8; color:#32506a; transition:all 0.2s ease; }
     .like-btn.liked { background:#dbf0ff; color:#1d9bf0; }
@@ -103,11 +105,57 @@
   const params = new URLSearchParams(window.location.search);
   const followBtn = document.getElementById("follow-btn");
   const followStatusEl = document.getElementById("follow-status");
+  const mentionCache = new Map();
 
   const verifyColors = { person: "#1d9bf0", org: "#ffd700", gov: "#8b98a5" };
 
   function esc(value) {
     return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function extractMentions(text) {
+    const out = new Set();
+    const regex = /(^|\s)@([a-zA-Z0-9_]{3,30})\b/g;
+    let match;
+    while ((match = regex.exec(text || "")) !== null) out.add(match[2].toLowerCase());
+    return [...out];
+  }
+
+  async function fetchMentionProfiles(usernames) {
+    const missing = usernames
+      .map((name) => name.toLowerCase())
+      .filter((name) => name && !mentionCache.has(name));
+    if (!missing.length) return;
+
+    for (let i = 0; i < missing.length; i += 10) {
+      const batch = missing.slice(i, i + 10);
+      const q = query(collection(db, "users"), where("username", "in", batch));
+      const snap = await getDocs(q);
+      snap.forEach((d) => {
+        const data = d.data();
+        if (data.username) mentionCache.set(String(data.username).toLowerCase(), { uid: d.id, ...data });
+      });
+    }
+  }
+
+  function renderMarkdown(text) {
+    let html = esc(text || "");
+    html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
+    html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+    html = html.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+    html = html.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    html = html.replace(/(^|[^\w])@([a-zA-Z0-9_]{3,30})\b/g, (full, prefix, username) => {
+      const user = mentionCache.get(username.toLowerCase());
+      if (user?.uid) {
+        return `${prefix}<a class="mention-link" href="/profile/?uid=${encodeURIComponent(user.uid)}">@${user.username}</a>`;
+      }
+      return `${prefix}<span class="mention">@${username}</span>`;
+    });
+    return html.replace(/\n/g, "<br>");
   }
 
   function formatTime(ts) {
@@ -220,27 +268,29 @@
         feed.innerHTML = `<article class="card"><div class="status">No posts yet.</div></article>`;
         return;
       }
+      const mentions = [...new Set(msgSnap.docs.flatMap((d) => d.data().mentions?.length ? d.data().mentions : extractMentions(d.data().content || "")))];
+      fetchMentionProfiles(mentions).then(() => {
+        feed.innerHTML = msgSnap.docs.map((d) => {
+          const m = d.data();
+          const avatarContent = profile.avatarUrl
+            ? `<img src="${encodeURI(String(profile.avatarUrl))}" alt="">`
+            : esc(profile.avatarInitials || "?");
 
-      feed.innerHTML = msgSnap.docs.map((d) => {
-        const m = d.data();
-        const avatarContent = profile.avatarUrl
-          ? `<img src="${encodeURI(String(profile.avatarUrl))}" alt="">`
-          : esc(profile.avatarInitials || "?");
-
-        return `
-          <article class="card tweet">
-            <div class="tweet-avatar">${avatarContent}</div>
-            <div>
-              <div class="tweet-head">
-                <strong>${esc(profile.displayName || m.authorName || "User")}</strong>
-                <span style="color:#657786">@${esc(profile.username || m.authorUsername || "node")}</span>
-                <span style="color:#657786">· ${esc(formatTime(m.createdAt))}</span>
+          return `
+            <article class="card tweet">
+              <div class="tweet-avatar">${avatarContent}</div>
+              <div>
+                <div class="tweet-head">
+                  <strong>${esc(profile.displayName || m.authorName || "User")}</strong>
+                  <span style="color:#657786">@${esc(profile.username || m.authorUsername || "node")}</span>
+                  <span style="color:#657786">· ${esc(formatTime(m.createdAt))}</span>
+                </div>
+                <div class="tweet-text">${renderMarkdown(m.content || "")}</div>
               </div>
-              <div class="tweet-text">${esc(m.content || "")}</div>
-            </div>
-          </article>
-        `;
-      }).join("");
+            </article>
+          `;
+        }).join("");
+      });
     });
   });
 </script>
