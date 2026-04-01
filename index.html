@@ -176,6 +176,7 @@
         const snap = await getDoc(userRef);
         if (!snap.exists()) {
             await setDoc(userRef, {
+                authorUid: user.uid,
                 uid: user.uid,
                 email: user.email,
                 username: toUsername(user.email, user.uid),

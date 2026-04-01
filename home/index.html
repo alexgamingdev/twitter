@@ -306,6 +306,7 @@
         if (snap.exists()) return snap.data();
         const displayName = user.email.split("@")[0];
         const newProfile = {
+            authorUid: user.uid,
             uid: user.uid,
             email: user.email,
             username: usernameFromEmail(user.email, user.uid),
