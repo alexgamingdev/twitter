@@ -10,14 +10,32 @@ service cloud.firestore {
     }
 
     // ─── Messages (public feed) ──────────────────────────────────────────────
-    // Anyone can read and create messages.
-    // Updates are restricted to the likes counter only.
+    // Everyone can read messages.
+    // Only authenticated authors may create their own messages.
+    // Updates are restricted to the likes counter and must match the
+    // authenticated user's like/unlike document transition.
     // Authors may delete their own messages.
     // The official Apple account (h9LplMNexsaNEwl0ATzWa3a94Z72) may also
     // delete messages posted under the Apple Developer profile ('apple').
     match /messages/{id} {
-      allow read, create: if true;
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.authorUid == request.auth.uid;
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && (
+          (
+            request.resource.data.likes == resource.data.likes + 1
+            && !exists(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
+          )
+          ||
+          (
+            request.resource.data.likes == resource.data.likes - 1
+            && exists(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
+            && !existsAfter(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
+          )
+        );
       allow delete: if request.auth != null && (
         resource.data.authorUid == request.auth.uid
         || (request.auth.uid == 'h9LplMNexsaNEwl0ATzWa3a94Z72'
@@ -30,13 +48,12 @@ service cloud.firestore {
     // Authenticated users may create their own profile document (registration).
     // Profile owners may update their own document, but may not change any
     // verification fields (verified, verifiedType, verifiedBy, canVerify).
-    // Verification fields may be updated by the admin portal — restricted to
-    // those three fields only (admin portal does not use Firebase Auth, so
-    // request.auth is null for that code path).
+    // Verification fields may be updated only by authenticated verifier
+    // accounts, restricted to those three fields only.
     //
     // Fields editable by profile owner:
     //   displayName, bio, avatarUrl, bannerUrl, avatarInitials, location, website
-    // Fields editable by admin only (no auth required = admin portal works):
+    // Fields editable by verifier accounts only:
     //   verified      (bool)
     //   verifiedType  ('person' | 'org' | 'gov')
     //   verifiedBy    ({ uid, name, logo } | null)
@@ -47,26 +64,38 @@ service cloud.firestore {
       // Registration: a new user may create their own profile document.
       allow create: if request.auth != null && request.auth.uid == userId;
       // Profile owner: may update any fields except verification/admin fields.
-      // Admin portal: may update only verification fields (no auth required).
+      // Verifier accounts: may update only verification fields.
       allow update: if (
         request.auth != null && request.auth.uid == userId &&
         !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['verified', 'verifiedType', 'verifiedBy', 'canVerify',
                      'followersCount', 'followingCount'])
       ) || (
+        request.auth != null &&
+        (
+          callerData().canVerify == true ||
+          (callerData().verifiedType != null && callerData().verifiedType.split(';').hasAny(['org', 'gov']))
+        ) &&
         request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['verified', 'verifiedType', 'verifiedBy'])
       );
     }
 
     // ─── Verification Requests ────────────────────────────────────────────────
-    // Anyone can submit a verification request (create).
-    // The admin portal reads all pending requests and deletes them on
-    // accept / reject.
+    // Authenticated users can submit a verification request for their own UID.
+    // Verifier accounts can read and delete requests during review.
     match /verification_requests/{id} {
-      allow read:   if true;
-      allow create: if true;
-      allow delete: if true;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.uid ||
+        callerData().canVerify == true ||
+        (callerData().verifiedType != null && callerData().verifiedType.split(';').hasAny(['org', 'gov']))
+      );
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.uid ||
+        callerData().canVerify == true ||
+        (callerData().verifiedType != null && callerData().verifiedType.split(';').hasAny(['org', 'gov']))
+      );
     }
 
     // ─── Org-Issued Verifications ─────────────────────────────────────────────
@@ -80,11 +109,11 @@ service cloud.firestore {
         && request.resource.data.issuedByUid == request.auth.uid
         && (
           // Organisations / canVerify accounts: may grant 'person' or 'org'
-          ((callerData().canVerify == true || callerData().verifiedType.split(';').hasAny(['org']))
+          ((callerData().canVerify == true || (callerData().verifiedType != null && callerData().verifiedType.split(';').hasAny(['org'])))
             && request.resource.data.type in ['org', 'person'])
           ||
           // Government accounts: may grant 'person', 'org', or 'gov'
-          (callerData().verifiedType.split(';').hasAny(['gov'])
+          (callerData().verifiedType != null && callerData().verifiedType.split(';').hasAny(['gov'])
             && request.resource.data.type in ['org', 'person', 'gov'])
         );
       allow update, delete: if false;
