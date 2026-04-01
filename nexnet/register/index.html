@@ -88,7 +88,7 @@
         import { initializeApp }             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, serverTimestamp, query, where, collection, getDocs, updateDoc }
+        import { getFirestore, doc, setDoc, serverTimestamp, query, where, collection, getDocs }
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { firebaseConfig } from "/js/firebase-config.js";
 
@@ -168,24 +168,14 @@
                     createdAt:      serverTimestamp()
                 });
 
-                // Send e-mail verification link before redirecting
-                // Check if dev/localhost environment
-                const isDev = window.location.hostname === "localhost" || 
-                              window.location.hostname === "127.0.0.1" ||
-                              window.location.protocol === "file:";
-                
-                if (!isDev) {
-                    try {
-                        await sendEmailVerification(credential.user);
-                    } catch (emailErr) {
-                        // Fallback when email fails
-                        console.warn("Email send failed, using bypass:", emailErr.message);
-                        await updateDoc(doc(db, "users", uid), { emailBypass: true });
-                    }
-                } else {
-                    // Dev mode: auto-bypass
-                    await updateDoc(doc(db, "users", uid), { emailBypass: true });
-                }
+                const verifyBase = window.location.origin.startsWith("http")
+                    ? window.location.origin
+                    : "https://alexgaming.is-a.dev";
+                const actionCodeSettings = {
+                    url: `${verifyBase}/verify-email/`,
+                    handleCodeInApp: false
+                };
+                await sendEmailVerification(credential.user, actionCodeSettings);
 
                 window.location.replace("/verify-email/");
             } catch (err) {

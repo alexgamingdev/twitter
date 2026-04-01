@@ -141,13 +141,21 @@
         if (!user) return;
 
         try {
-            statusEl.textContent = "✓ Verifikation bestätigt - weiterleiten...";
+            const verifyBase = window.location.origin.startsWith("http")
+                ? window.location.origin
+                : "https://alexgaming.is-a.dev";
+            const actionCodeSettings = {
+                url: `${verifyBase}/verify-email/`,
+                handleCodeInApp: false
+            };
+
+            await sendEmailVerification(user, actionCodeSettings);
+            statusEl.textContent = "Verifizierungs-E-Mail wurde erneut gesendet.";
             statusEl.style.color = "#1da1f2";
             cooldown = true;
-            await updateDoc(doc(db, "users", user.uid), { emailBypass: true });
-            setTimeout(() => { window.location.href = "../home/"; }, 500);
+            setTimeout(() => { cooldown = false; }, 60000);
         } catch (err) {
-            statusEl.textContent = `Fehler: ${err.message}`;
+            statusEl.textContent = `Fehler beim Senden: ${err.message}`;
             statusEl.style.color = "#b00020";
         }
     });

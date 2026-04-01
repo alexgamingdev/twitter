@@ -176,37 +176,20 @@
             if (!user) return;
 
             try {
-                // Check if dev/localhost environment
-                const isDev = window.location.hostname === "localhost" || 
-                              window.location.hostname === "127.0.0.1" ||
-                              window.location.protocol === "file:";
-                
-                if (isDev) {
-                    statusEl.textContent = "🔧 Dev-Mode: E-Mail verification skipped.";
-                    statusEl.style.color = 'var(--accent)';
-                    statusEl.classList.remove('hidden');
-                    await updateDoc(doc(db, 'users', user.uid), { emailBypass: true });
-                    setTimeout(() => { window.location.replace("/home/"); }, 1000);
-                    return;
-                }
-
-                try {
-                    await sendEmailVerification(user);
-                    resendCooldown = true;
-                    statusEl.textContent = "✓ Verification e-mail resent. Please check your inbox.";
-                    statusEl.style.color = 'var(--accent)';
-                    statusEl.classList.remove('hidden');
-                    // Allow resending again after 60 seconds
-                    setTimeout(() => { resendCooldown = false; }, 60000);
-                } catch (emailErr) {
-                    // Fallback when email fails
-                    console.warn("Email send failed, using bypass:", emailErr.message);
-                    statusEl.textContent = "⚠️ E-Mail could not be sent, using bypass...";
-                    statusEl.style.color = '#ff9800';
-                    statusEl.classList.remove('hidden');
-                    await updateDoc(doc(db, 'users', user.uid), { emailBypass: true });
-                    setTimeout(() => { window.location.replace("/home/"); }, 1500);
-                }
+                const verifyBase = window.location.origin.startsWith("http")
+                    ? window.location.origin
+                    : "https://alexgaming.is-a.dev";
+                const actionCodeSettings = {
+                    url: `${verifyBase}/verify-email/`,
+                    handleCodeInApp: false
+                };
+                await sendEmailVerification(user, actionCodeSettings);
+                resendCooldown = true;
+                statusEl.textContent = "✓ Verification e-mail resent. Please check your inbox.";
+                statusEl.style.color = 'var(--accent)';
+                statusEl.classList.remove('hidden');
+                // Allow resending again after 60 seconds
+                setTimeout(() => { resendCooldown = false; }, 60000);
             } catch (err) {
                 statusEl.textContent = "Error: " + err.message;
                 statusEl.style.color = '#ff4d6d';
