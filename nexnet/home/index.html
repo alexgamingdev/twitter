@@ -450,6 +450,7 @@
 
             // Load the posts this user has already liked
             await loadLikedPostIds();
+            renderProfileCard(0);
 
             // ── Real-time Feed (messages collection) ──────────────────────────
             const postsQuery = query(
@@ -460,9 +461,7 @@
             onSnapshot(postsQuery, async (snapshot) => {
                 // Fetch live profiles for all authors in one batch
                 const authorUids = [...new Set(snapshot.docs.map(d => d.data().authorUid).filter(Boolean))];
-                await fetchProfiles(authorUids);
                 const mentionUsernames = [...new Set(snapshot.docs.flatMap((d) => d.data().mentions && d.data().mentions.length ? d.data().mentions : extractMentions(d.data().content || '')) )];
-                await fetchMentionProfiles(mentionUsernames);
 
                 const feed = document.getElementById('feed');
                 feed.innerHTML = '';
@@ -472,6 +471,8 @@
                 if (snapshot.empty) {
                     feed.innerHTML = '<p class="text-center text-xs mono pt-8" style="color:var(--text-dim)">No transmissions yet. Be the first.</p>';
                 }
+                fetchProfiles(authorUids).catch(() => {});
+                fetchMentionProfiles(mentionUsernames).catch(() => {});
             });
         });
 

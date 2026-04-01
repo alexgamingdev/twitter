@@ -524,6 +524,7 @@
         currentUser = user;
         profile = await ensureProfile(user);
         await loadLikedPostIds();
+        renderProfileCard(0);
         updateComposerState();
 
         const profileHref = `../profile/?uid=${encodeURIComponent(user.uid)}`;
@@ -533,10 +534,11 @@
         const feedQuery = query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(100));
         onSnapshot(feedQuery, async (snap) => {
             const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            await fetchProfiles([...new Set(items.map((item) => item.authorUid).filter(Boolean))]);
-            const mentionUsernames = [...new Set(items.flatMap((item) => item.mentions && item.mentions.length ? item.mentions : extractMentions(item.content || "")))];
-            await fetchMentionProfiles(mentionUsernames);
             renderFeed(items);
+            const authorIds = [...new Set(items.map((item) => item.authorUid).filter(Boolean))];
+            const mentionUsernames = [...new Set(items.flatMap((item) => item.mentions && item.mentions.length ? item.mentions : extractMentions(item.content || "")))];
+            fetchProfiles(authorIds).catch(() => {});
+            fetchMentionProfiles(mentionUsernames).catch(() => {});
         }, (error) => { statusEl.textContent = `Feed error: ${error.message}`; });
     });
 
