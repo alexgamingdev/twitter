@@ -323,6 +323,20 @@
         return created.data();
     }
 
+    function fallbackProfile(user) {
+        const displayName = user.displayName || user.email.split("@")[0];
+        return {
+            uid: user.uid,
+            email: user.email,
+            username: usernameFromEmail(user.email, user.uid),
+            displayName,
+            avatarInitials: displayName.slice(0, 2).toUpperCase(),
+            bio: "",
+            verified: false,
+            verifiedType: ""
+        };
+    }
+
     async function fetchProfiles(uids) {
         const missing = uids.filter((uid) => uid && !profileCache.has(uid));
         await Promise.all(missing.map(async (uid) => {
@@ -513,19 +527,29 @@
     onAuthStateChanged(auth, async (user) => {
         if (!user) { window.location.href = "../"; return; }
 
-        if (!user.emailVerified) {
-            const bypassSnap = await getDoc(doc(db, "users", user.uid));
-            if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
-                window.location.href = "../verify-email/";
-                return;
-            }
-        }
-
         currentUser = user;
-        profile = await ensureProfile(user);
-        await loadLikedPostIds();
+        profile = fallbackProfile(user);
         renderProfileCard(0);
         updateComposerState();
+
+        try {
+            if (!user.emailVerified) {
+                const bypassSnap = await getDoc(doc(db, "users", user.uid));
+                if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
+                    window.location.href = "../verify-email/";
+                    return;
+                }
+            }
+
+            profile = await ensureProfile(user);
+        } catch (error) {
+            statusEl.textContent = `Profile load fallback: ${error.message}`;
+        }
+
+        renderProfileCard(0);
+        updateComposerState();
+        loadLikedPostIds().catch((error) => { statusEl.textContent = `Likes load failed: ${error.message}`; });
+        renderProfileCard(0);
 
         const profileHref = `../profile/?uid=${encodeURIComponent(user.uid)}`;
         document.getElementById("profile-link").href = profileHref;

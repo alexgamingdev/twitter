@@ -278,6 +278,20 @@
             } catch (_) {}
         }
 
+        function fallbackProfile(user) {
+            const baseName = (user.displayName || (user.email || '').split('@')[0] || 'Node');
+            return {
+                uid: user.uid,
+                email: user.email || '',
+                username: profileFromEmail(user.email || '', user.uid).username,
+                displayName: baseName,
+                avatarInitials: baseName.slice(0, 2).toUpperCase(),
+                bio: '',
+                verified: false,
+                verifiedType: ''
+            };
+        }
+
         async function fetchMentionProfiles(usernames) {
             const missing = usernames
                 .map((name) => name.toLowerCase())
@@ -400,56 +414,68 @@
                 window.location.replace("/login/");
                 return;
             }
-            if (!user.emailVerified) {
-                const bypassSnap = await getDoc(doc(db, "users", user.uid));
-                if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
-                    window.location.replace("/verify-email/");
-                    return;
-                }
-            }
             currentUser = user;
+            currentProfile = fallbackProfile(user);
 
-            // Load profile from Firestore
-            const profileSnap = await getDoc(doc(db, "users", user.uid));
-            if (profileSnap.exists()) {
-                currentProfile = profileSnap.data();
-            } else {
-                // Profile doc missing (e.g. created before the registration fix).
-                // Auto-create it from Firebase Auth data so Settings can update it.
-                // Append a UID suffix to the email-derived username to avoid collisions.
-                const derived = profileFromEmail(user.email);
-                derived.username = derived.username + '_' + user.uid.slice(0, 12);
-                currentProfile = { uid: user.uid, email: user.email, ...derived, verified: false };
-                await setDoc(doc(db, "users", user.uid), {
-                    ...currentProfile,
-                    createdAt: serverTimestamp()
-                });
-            }
-
-            // Populate "Your Node" sidebar
+            // Paint the basic UI immediately so it never gets stuck on Loading.
             const nodeLink = document.getElementById('node-name-link');
             nodeLink.textContent = currentProfile.username;
             nodeLink.href        = `/profile/?uid=${encodeURIComponent(user.uid)}`;
 
-            // Show actual profile picture in compose box if available
             const composeAvatar = document.getElementById('compose-avatar');
-            if (currentProfile.avatarUrl) {
-                composeAvatar.style.background = 'none';
-                composeAvatar.style.padding    = '0';
-                const img = document.createElement('img');
-                img.className = 'w-full h-full rounded-full object-cover';
-                img.alt       = '';
-                img.src       = currentProfile.avatarUrl;
-                composeAvatar.appendChild(img);
-            } else {
-                composeAvatar.textContent = currentProfile.avatarInitials;
+            composeAvatar.textContent = currentProfile.avatarInitials;
+            renderProfileCard(0);
+
+            try {
+                if (!user.emailVerified) {
+                    const bypassSnap = await getDoc(doc(db, "users", user.uid));
+                    if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
+                        window.location.replace("/verify-email/");
+                        return;
+                    }
+                }
+
+                // Load profile from Firestore
+                const profileSnap = await getDoc(doc(db, "users", user.uid));
+                if (profileSnap.exists()) {
+                    currentProfile = profileSnap.data();
+                } else {
+                    // Profile doc missing (e.g. created before the registration fix).
+                    // Auto-create it from Firebase Auth data so Settings can update it.
+                    // Append a UID suffix to the email-derived username to avoid collisions.
+                    const derived = profileFromEmail(user.email);
+                    derived.username = derived.username + '_' + user.uid.slice(0, 12);
+                    currentProfile = { uid: user.uid, email: user.email, ...derived, verified: false };
+                    await setDoc(doc(db, "users", user.uid), {
+                        ...currentProfile,
+                        createdAt: serverTimestamp()
+                    });
+                }
+
+                // Refresh the visible UI with Firestore data once it arrives.
+                nodeLink.textContent = currentProfile.username;
+
+                if (currentProfile.avatarUrl) {
+                    composeAvatar.style.background = 'none';
+                    composeAvatar.style.padding    = '0';
+                    composeAvatar.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.className = 'w-full h-full rounded-full object-cover';
+                    img.alt       = '';
+                    img.src       = currentProfile.avatarUrl;
+                    composeAvatar.appendChild(img);
+                } else {
+                    composeAvatar.textContent = currentProfile.avatarInitials;
+                }
+            } catch (error) {
+                console.warn('Profile load fallback:', error);
             }
 
             // Wire logout button
             document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
             // Load the posts this user has already liked
-            await loadLikedPostIds();
+            loadLikedPostIds().catch((err) => { console.warn('likes load failed', err); });
             renderProfileCard(0);
 
             // ── Real-time Feed (messages collection) ──────────────────────────
