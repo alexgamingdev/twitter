@@ -26,14 +26,14 @@ service cloud.firestore {
         && (
           (
             request.resource.data.likes == resource.data.likes + 1
-            && !exists(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
-            && existsAfter(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
+            && !exists(/databases/$(database)/documents/post_likes/$(id + '_' + request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/post_likes/$(id + '_' + request.auth.uid))
           )
           ||
           (
             request.resource.data.likes == resource.data.likes - 1
-            && exists(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
-            && !existsAfter(/databases/$(database)/documents/post_likes/$(id)_$(request.auth.uid))
+            && exists(/databases/$(database)/documents/post_likes/$(id + '_' + request.auth.uid))
+            && !existsAfter(/databases/$(database)/documents/post_likes/$(id + '_' + request.auth.uid))
           )
         );
       allow delete: if request.auth != null && (
@@ -53,7 +53,7 @@ service cloud.firestore {
     //
     // Fields editable by profile owner:
     //   displayName, bio, avatarUrl, bannerUrl, avatarInitials, location, website
-    // Fields editable by verifier accounts only:
+    // Fields editable by admin only (no auth required = admin portal works):
     //   verified      (bool)
     //   verifiedType  ('person' | 'org' | 'gov')
     //   verifiedBy    ({ uid, name, logo } | null)
