@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter / Willkommen</title>
+    <link rel="icon" href="https://abs.twimg.com/favicons/twitter.2.ico" type="image/x-icon">
+    <style>
+        :root {
+            --twitter-blue: #1da1f2;
+            --bg: #1da1f2;
+            --surface: #ffffff;
+            --border: #e6ecf0;
+            --text: #14171a;
+            --muted: #657786;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at top right, #5bc0ff 0%, var(--bg) 45%, #1789cf 100%);
+            color: var(--text);
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 18px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
+            padding: 34px;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+            display: block;
+            margin: 0 auto 14px;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            text-align: center;
+            font-size: 26px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .field label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus {
+            border-color: var(--twitter-blue);
+            box-shadow: 0 0 0 3px rgba(29, 161, 242, 0.16);
+        }
+
+        .actions {
+            margin-top: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 999px;
+            background: var(--twitter-blue);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .toggle {
+            margin-top: 14px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--twitter-blue);
+            cursor: pointer;
+        }
+
+        .status {
+            min-height: 20px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #b00020;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<section class="auth-box" aria-label="Authentifizierung">
+    <img class="logo" src="https://abs.twimg.com/favicons/twitter.2.ico" alt="Twitter Logo">
+    <h1 id="title">Bei Twitter anmelden</h1>
+
+    <div class="field">
+        <label for="email">E-Mail</label>
+        <input type="email" id="email" placeholder="name@email.de" autocomplete="email" required>
+    </div>
+    <div class="field">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" placeholder="Mind. 8 Zeichen" autocomplete="current-password" minlength="8" required>
+    </div>
+
+    <div class="actions">
+        <button id="auth-btn" type="button">Anmelden</button>
+    </div>
+    <div class="toggle" id="toggle-mode">Noch keinen Account? Registrieren</div>
+    <div class="status" id="status" aria-live="polite"></div>
+</section>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCz9fehRDGTBC7EQZehiVMNw7jUSSvzku4",
+        authDomain: "socialmedia-71e80.firebaseapp.com",
+        projectId: "socialmedia-71e80",
+        storageBucket: "socialmedia-71e80.firebasestorage.app",
+        messagingSenderId: "123307537043",
+        appId: "1:123307537043:web:de892b7015e37d96691366",
+        measurementId: "G-RC2M53VDH9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let isLogin = true;
+
+    const titleEl = document.getElementById("title");
+    const toggleEl = document.getElementById("toggle-mode");
+    const authBtn = document.getElementById("auth-btn");
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const statusEl = document.getElementById("status");
+
+    function toUsername(email, uid) {
+        const base = email.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 20) || "node";
+        return `node_${base}_${uid.slice(0, 4)}`;
+    }
+
+    async function ensureProfile(user) {
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        if (!snap.exists()) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email,
+                username: toUsername(user.email, user.uid),
+                displayName: user.email.split("@")[0],
+                avatarInitials: user.email.split("@")[0].slice(0, 2).toUpperCase(),
+                bio: "",
+                verified: false,
+                verifiedType: "",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+    }
+
+    async function routeAfterLogin(user) {
+        const profileSnap = await getDoc(doc(db, "users", user.uid));
+        const bypass = profileSnap.exists() && profileSnap.data().emailBypass;
+        if (user.emailVerified || bypass) {
+            window.location.href = "./home/";
+            return;
+        }
+        window.location.href = "./verify-email/";
+    }
+
+    function setMode(loginMode) {
+        isLogin = loginMode;
+        titleEl.textContent = isLogin ? "Bei Twitter anmelden" : "Account erstellen";
+        authBtn.textContent = isLogin ? "Anmelden" : "Registrieren";
+        passEl.autocomplete = isLogin ? "current-password" : "new-password";
+        toggleEl.textContent = isLogin ? "Noch keinen Account? Registrieren" : "Bereits ein Konto? Anmelden";
+        statusEl.textContent = "";
+    }
+
+    function parseFirebaseError(code) {
+        const map = {
+            "auth/invalid-email": "Bitte eine gueltige E-Mail eingeben.",
+            "auth/missing-password": "Bitte ein Passwort eingeben.",
+            "auth/invalid-credential": "Login fehlgeschlagen. Bitte Daten pruefen.",
+            "auth/email-already-in-use": "Diese E-Mail wird bereits verwendet.",
+            "auth/weak-password": "Passwort ist zu schwach (mind. 8 Zeichen)."
+        };
+        return map[code] || "Aktion fehlgeschlagen. Bitte erneut versuchen.";
+    }
+
+    toggleEl.addEventListener("click", () => setMode(!isLogin));
+
+    authBtn.addEventListener("click", async () => {
+        const email = emailEl.value.trim();
+        const pass = passEl.value;
+        if (!email || !pass) {
+            statusEl.textContent = "Bitte E-Mail und Passwort ausfuellen.";
+            return;
+        }
+
+        authBtn.disabled = true;
+        statusEl.style.color = "#657786";
+        statusEl.textContent = isLogin ? "Melde an..." : "Erstelle Konto...";
+
+        try {
+            let credential;
+            if (isLogin) {
+                credential = await signInWithEmailAndPassword(auth, email, pass);
+            } else {
+                credential = await createUserWithEmailAndPassword(auth, email, pass);
+                await ensureProfile(credential.user);
+                
+                // Auto-bypass: Kein sendEmailVerification (Firebase Permission Issue)
+                const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+                const db = getFirestore(app);
+                await updateDoc(doc(db, "users", credential.user.uid), { emailBypass: true });
+                statusEl.textContent = "✓ Account erstellt - Weiterleitung...";
+                statusEl.style.color = "#1da1f2";
+            }
+
+            if (credential?.user) {
+                await ensureProfile(credential.user);
+                await routeAfterLogin(credential.user);
+            }
+        } catch (e) {
+            statusEl.style.color = "#b00020";
+            statusEl.textContent = parseFirebaseError(e.code);
+        } finally {
+            authBtn.disabled = false;
+        }
+    });
+
+    [emailEl, passEl].forEach((el) => {
+        el.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                authBtn.click();
+            }
+        });
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            await routeAfterLogin(user);
+        }
+    });
+</script>
+</body>
+</html>

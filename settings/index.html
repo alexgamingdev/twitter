@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter / Settings</title>
+    <link rel="icon" href="https://abs.twimg.com/favicons/twitter.2.ico" type="image/x-icon">
+    <style>
+        :root {
+            --twitter-blue: #1da1f2;
+            --bg: #f5f8fa;
+            --surface: #fff;
+            --border: #e6ecf0;
+            --muted: #657786;
+            --danger-bg: #ffe8e8;
+            --danger-text: #b00020;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: #14171a;
+        }
+        .topbar { position: sticky; top: 0; z-index: 50; height: 56px; background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        .topbar-inner { width: 100%; max-width: 980px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+        .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; font-weight: 800; }
+        .brand img { width: 25px; height: 25px; }
+        .nav-links a, .nav-links button { border: none; background: transparent; color: #0f1419; text-decoration: none; cursor: pointer; font-size: 14px; font-weight: 700; padding: 8px 10px; border-radius: 999px; margin-left: 6px; }
+        .nav-links a:hover, .nav-links button:hover { color: var(--twitter-blue); background: rgba(29,161,242,0.12); }
+        .container { max-width: 980px; margin: 20px auto; padding: 0 16px 24px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+        h1 { margin: 0 0 12px; font-size: 24px; }
+        h2 { margin: 0 0 10px; font-size: 18px; }
+        .sub { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+        .field { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .field label { color: var(--muted); font-size: 13px; }
+        input, textarea, select { border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 14px; font-family: inherit; outline: none; }
+        textarea { min-height: 90px; resize: vertical; }
+        input:focus, textarea:focus, select:focus { border-color: var(--twitter-blue); box-shadow: 0 0 0 3px rgba(29,161,242,0.16); }
+        .btn-row { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn { border: none; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+        .btn.primary { background: var(--twitter-blue); color: #fff; }
+        .btn.ghost { background: #eef3f8; color: #23384d; }
+        .danger { border: 1px solid #f7c0c0; background: var(--danger-bg); color: var(--danger-text); }
+        .status { min-height: 20px; margin-top: 10px; font-size: 14px; color: var(--muted); }
+        .type-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .type-btn { border: 1px solid var(--border); border-radius: 999px; background: #fff; color: #43586b; font-size: 12px; padding: 6px 12px; cursor: pointer; font-weight: 700; }
+        .type-btn.active-person { border-color: #1d9bf0; color: #1d9bf0; }
+        .type-btn.active-org { border-color: #ffd700; color: #9a7d00; }
+        .type-btn.active-gov { border-color: #8b98a5; color: #51606d; }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="../home/"><img src="https://abs.twimg.com/favicons/twitter.2.ico" alt="Twitter Logo"><span>Twitter</span></a>
+        <nav class="nav-links"><a href="../home/">Home</a><a href="../profile/">Profile</a><a href="../settings/">Settings</a><button type="button" id="logout">Logout</button></nav>
+    </div>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h1>Account Settings</h1>
+        <div class="sub">Email: <span id="user-email">Loading...</span></div>
+        <div class="field"><label for="display-name">Anzeigename</label><input id="display-name" maxlength="40"></div>
+        <div class="field"><label for="handle">Username</label><input id="handle" maxlength="30"></div>
+        <div class="field"><label for="bio">Bio</label><textarea id="bio" maxlength="160"></textarea></div>
+        <div class="field"><label for="org-logo">Org/Gov Logo URL</label><input id="org-logo" maxlength="500"></div>
+        <div class="field"><label for="avatar-url">Avatar URL</label><input id="avatar-url" maxlength="500"></div>
+        <div class="field"><label for="banner-url">Banner URL</label><input id="banner-url" maxlength="500"></div>
+        <div class="field"><label for="location">Ort</label><input id="location" maxlength="50"></div>
+        <div class="field"><label for="website">Website</label><input id="website" maxlength="200"></div>
+        <div class="btn-row"><button class="btn primary" type="button" id="save-profile">Save Profile</button><button class="btn ghost" type="button" id="refresh-profile">Reload</button></div>
+        <div class="status" id="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+        <h2>Security</h2>
+        <div class="field"><label for="email-current-pw">Current Password (for Email)</label><input id="email-current-pw" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="email-new">New Email</label><input id="email-new" type="email" autocomplete="email"></div>
+        <div class="btn-row"><button class="btn ghost" type="button" id="update-email">Update Email</button></div>
+        <div class="field"><label for="pw-current">Current Password</label><input id="pw-current" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="pw-new">New Password</label><input id="pw-new" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="pw-confirm">Confirm New Password</label><input id="pw-confirm" type="password" autocomplete="new-password"></div>
+        <div class="btn-row"><button class="btn ghost" type="button" id="update-password">Update Password</button></div>
+    </section>
+
+    <section class="card" id="verify-section">
+        <h2>Verification Request</h2>
+        <div class="type-row"><button class="type-btn active-person" type="button" data-type="person" id="btn-type-person">Person</button><button class="type-btn" type="button" data-type="org" id="btn-type-org">Organization</button><button class="type-btn" type="button" data-type="gov" id="btn-type-gov">Government</button></div>
+        <input type="hidden" id="v-type" value="person">
+        <div class="field"><label for="v-url">Proof URL</label><input id="v-url" type="url"></div>
+        <div class="field"><label for="v-reason">Reason</label><textarea id="v-reason" maxlength="500"></textarea></div>
+        <div class="btn-row"><button class="btn primary" type="button" id="submit-verify">Send Request</button></div>
+    </section>
+
+    <section class="card" id="org-verify-section" style="display:none;">
+        <h2>Grant Verification</h2>
+        <div class="field"><label for="ov-uid">Target UID</label><input id="ov-uid"></div>
+        <div class="field"><label for="ov-type">Type</label><select id="ov-type"><option value="person">Person</option><option value="org">Organization</option></select></div>
+        <div class="btn-row"><button class="btn primary" type="button" id="grant-verify">Grant Verification</button></div>
+    </section>
+
+    <section class="card danger">
+        <strong>Danger Zone</strong>
+        <p>This removes the account and all own messages permanently.</p>
+        <button class="btn" type="button" id="delete-acc" style="background:#fff; color:#b00020; border:1px solid #e7a0a0;">Delete Account Permanently</button>
+    </section>
+</main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, deleteUser, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, collection, addDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCz9fehRDGTBC7EQZehiVMNw7jUSSvzku4",
+        authDomain: "socialmedia-71e80.firebaseapp.com",
+        projectId: "socialmedia-71e80",
+        storageBucket: "socialmedia-71e80.firebasestorage.app",
+        messagingSenderId: "123307537043",
+        appId: "1:123307537043:web:de892b7015e37d96691366",
+        measurementId: "G-RC2M53VDH9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const statusEl = document.getElementById("status");
+    const displayNameEl = document.getElementById("display-name");
+    const handleEl = document.getElementById("handle");
+    const bioEl = document.getElementById("bio");
+    const orgLogoEl = document.getElementById("org-logo");
+    const avatarUrlEl = document.getElementById("avatar-url");
+    const bannerUrlEl = document.getElementById("banner-url");
+    const locationEl = document.getElementById("location");
+    const websiteEl = document.getElementById("website");
+
+    let currentUser = null;
+    let currentProfile = null;
+
+    function sanitizeHandle(value) {
+        return value.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 30);
+    }
+
+    async function loadProfile() {
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        if (!snap.exists()) {
+            statusEl.textContent = "Profile not found.";
+            return;
+        }
+
+        const data = snap.data();
+        currentProfile = data;
+        document.getElementById("user-email").textContent = data.email || currentUser.email;
+        displayNameEl.value = data.displayName || "";
+        handleEl.value = data.username || "";
+        bioEl.value = data.bio || "";
+        orgLogoEl.value = data.orgLogo || data.verifiedBy?.logo || "";
+        avatarUrlEl.value = data.avatarUrl || "";
+        bannerUrlEl.value = data.bannerUrl || "";
+        locationEl.value = data.location || "";
+        websiteEl.value = data.website || "";
+
+        const level = data.verified && data.verifiedType ? data.verifiedType : "none";
+        statusEl.textContent = `Verification level: ${level}`;
+
+        const vTypes = data.verifiedType ? data.verifiedType.split(";") : [];
+        const isGov = vTypes.includes("gov");
+        if (data.canVerify || vTypes.includes("org") || isGov) {
+            document.getElementById("org-verify-section").style.display = "block";
+            if (isGov && !document.querySelector('#ov-type option[value="gov"]')) {
+                const opt = document.createElement("option");
+                opt.value = "gov";
+                opt.textContent = "Government";
+                document.getElementById("ov-type").appendChild(opt);
+            }
+        }
+
+        if (data.verified && data.verifiedType) {
+            document.getElementById("verify-section").style.display = "none";
+        }
+    }
+
+    document.getElementById("save-profile").addEventListener("click", async () => {
+        if (!currentUser) return;
+        const cleanHandle = sanitizeHandle(handleEl.value.trim());
+        if (!cleanHandle || cleanHandle.length < 3) {
+            statusEl.textContent = "Username must be 3-30 chars (a-z,0-9,_).";
+            return;
+        }
+
+        try {
+            const snap = await getDocs(query(collection(db, "users"), where("username", "==", cleanHandle)));
+            if (snap.docs.some((d) => d.id !== currentUser.uid)) {
+                statusEl.textContent = "Username is already taken.";
+                return;
+            }
+
+            await updateDoc(doc(db, "users", currentUser.uid), {
+                displayName: displayNameEl.value.trim().slice(0, 40) || cleanHandle,
+                username: cleanHandle,
+                bio: bioEl.value.trim().slice(0, 160),
+                orgLogo: orgLogoEl.value.trim().slice(0, 500),
+                avatarUrl: avatarUrlEl.value.trim().slice(0, 500),
+                bannerUrl: bannerUrlEl.value.trim().slice(0, 500),
+                location: locationEl.value.trim().slice(0, 50),
+                website: websiteEl.value.trim().slice(0, 200),
+                avatarInitials: (displayNameEl.value.trim() || cleanHandle).slice(0, 2).toUpperCase(),
+                updatedAt: serverTimestamp()
+            });
+            statusEl.textContent = "Profile saved.";
+        } catch (err) {
+            statusEl.textContent = `Save failed: ${err.message}`;
+        }
+    });
+
+    document.getElementById("refresh-profile").addEventListener("click", loadProfile);
+
+    document.querySelectorAll(".type-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const type = btn.getAttribute("data-type");
+            document.getElementById("v-type").value = type;
+            document.querySelectorAll(".type-btn").forEach((b) => (b.className = "type-btn"));
+            btn.classList.add(`active-${type}`);
+        });
+    });
+
+    document.getElementById("submit-verify").addEventListener("click", async () => {
+        try {
+            await addDoc(collection(db, "verification_requests"), {
+                uid: currentUser.uid,
+                type: document.getElementById("v-type").value,
+                website: document.getElementById("v-url").value.trim(),
+                reason: document.getElementById("v-reason").value.trim(),
+                date: serverTimestamp()
+            });
+            statusEl.textContent = "Verification request sent.";
+        } catch (err) {
+            statusEl.textContent = `Request failed: ${err.message}`;
+        }
+    });
+
+    document.getElementById("grant-verify").addEventListener("click", async () => {
+        const targetUid = document.getElementById("ov-uid").value.trim();
+        const grantType = document.getElementById("ov-type").value;
+        if (!targetUid) {
+            statusEl.textContent = "Please enter a target UID.";
+            return;
+        }
+
+        try {
+            await updateDoc(doc(db, "users", targetUid), {
+                verified: true,
+                verifiedType: grantType,
+                verifiedBy: {
+                    uid: currentUser.uid,
+                    name: currentProfile.displayName || "",
+                    logo: currentProfile.orgLogo || currentProfile.avatarUrl || ""
+                }
+            });
+            await addDoc(collection(db, "org_verifications"), {
+                issuedByUid: currentUser.uid,
+                issuedByName: currentProfile.displayName || "",
+                issuedByLogo: currentProfile.orgLogo || currentProfile.avatarUrl || "",
+                targetUid,
+                type: grantType,
+                date: serverTimestamp()
+            });
+            statusEl.textContent = "Verification granted successfully.";
+        } catch (err) {
+            statusEl.textContent = `Grant failed: ${err.message}`;
+        }
+    });
+
+    document.getElementById("update-email").addEventListener("click", async () => {
+        const currentPw = document.getElementById("email-current-pw").value;
+        const newEmail = document.getElementById("email-new").value.trim();
+        if (!currentPw || !newEmail) {
+            statusEl.textContent = "Please enter current password and new email.";
+            return;
+        }
+
+        try {
+            const credential = EmailAuthProvider.credential(currentUser.email, currentPw);
+            await reauthenticateWithCredential(currentUser, credential);
+            await verifyBeforeUpdateEmail(currentUser, newEmail);
+            statusEl.textContent = `Verification email sent to ${newEmail}.`;
+        } catch (err) {
+            statusEl.textContent = `Email update failed: ${err.message}`;
+        }
+    });
+
+    document.getElementById("update-password").addEventListener("click", async () => {
+        const currentPw = document.getElementById("pw-current").value;
+        const newPw = document.getElementById("pw-new").value;
+        const confirmPw = document.getElementById("pw-confirm").value;
+
+        if (!currentPw || !newPw || !confirmPw) {
+            statusEl.textContent = "Please fill all password fields.";
+            return;
+        }
+        if (newPw.length < 6) {
+            statusEl.textContent = "New password must be at least 6 characters.";
+            return;
+        }
+        if (newPw !== confirmPw) {
+            statusEl.textContent = "New passwords do not match.";
+            return;
+        }
+
+        try {
+            const credential = EmailAuthProvider.credential(currentUser.email, currentPw);
+            await reauthenticateWithCredential(currentUser, credential);
+            await updatePassword(currentUser, newPw);
+            statusEl.textContent = "Password updated successfully.";
+        } catch (err) {
+            statusEl.textContent = `Password update failed: ${err.message}`;
+        }
+    });
+
+    document.getElementById("logout").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "../";
+    });
+
+    document.getElementById("delete-acc").addEventListener("click", async () => {
+        if (!confirm("Are you sure? Account and own messages will be deleted.")) return;
+
+        statusEl.textContent = "Deleting data...";
+        try {
+            const ownMsgs = await getDocs(query(collection(db, "messages"), where("authorUid", "==", currentUser.uid)));
+            const ownLikes = await getDocs(query(collection(db, "post_likes"), where("uid", "==", currentUser.uid)));
+            const batch = writeBatch(db);
+            ownMsgs.forEach((d) => batch.delete(d.ref));
+            ownLikes.forEach((d) => batch.delete(d.ref));
+            batch.delete(doc(db, "users", currentUser.uid));
+            await batch.commit();
+
+            await deleteUser(currentUser);
+            window.location.href = "../";
+        } catch (err) {
+            if (err.code === "auth/requires-recent-login") {
+                statusEl.textContent = "Please re-login and try deleting again.";
+                return;
+            }
+            statusEl.textContent = `Delete failed: ${err.message}`;
+        }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = "../";
+            return;
+        }
+
+        if (!user.emailVerified) {
+            const bypassSnap = await getDoc(doc(db, "users", user.uid));
+            if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
+                window.location.href = "../verify-email/";
+                return;
+            }
+        }
+
+        currentUser = user;
+        await loadProfile();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexNet | 501 — Protocol Unimplemented</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .error-code {
+            font-size: clamp(6rem, 20vw, 12rem);
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.18;
+            user-select: none;
+        }
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            91% { transform: translate(-2px, 1px); }
+            93% { transform: translate(2px, -1px); }
+            95% { transform: translate(-1px, 2px); }
+            97% { transform: translate(1px, -2px); }
+        }
+        .node-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6 pb-10">
+    <div id="nexnet-content">
+        <!-- Decorative icon -->
+        <div class="flex justify-center mb-6">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="node-pulse">
+                <circle cx="40" cy="40" r="38" stroke="rgba(0,229,255,0.12)" stroke-width="1.5"/>
+                <rect x="20" y="28" width="40" height="10" rx="3" stroke="rgba(0,229,255,0.45)" stroke-width="1.8" fill="rgba(0,229,255,0.04)"/>
+                <rect x="20" y="42" width="40" height="10" rx="3" stroke="rgba(0,229,255,0.45)" stroke-width="1.8" fill="rgba(0,229,255,0.04)"/>
+                <circle cx="54" cy="33" r="2" fill="rgba(0,229,255,0.5)"/>
+                <circle cx="54" cy="47" r="2" fill="rgba(0,229,255,0.2)"/>
+                <line x1="26" y1="33" x2="46" y2="33" stroke="rgba(0,229,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="26" y1="47" x2="46" y2="47" stroke="rgba(0,229,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="40" y1="58" x2="40" y2="64" stroke="rgba(0,229,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="34" y1="64" x2="46" y2="64" stroke="rgba(0,229,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <div class="relative">
+            <div class="error-code orbitron font-black absolute inset-0 flex items-center justify-center pointer-events-none select-none glitch">
+                501
+            </div>
+
+            <div class="glass-panel p-10 relative z-10">
+                <div class="mb-2">
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent)">Error 501</span>
+                </div>
+                <h1 class="orbitron text-2xl font-black tracking-wider text-white mb-3">
+                    Protocol Unimplemented
+                </h1>
+                <p class="text-sm leading-relaxed mb-2 mono uppercase tracking-widest" style="color: rgba(255,255,255,0.35); font-size: 0.65rem;">
+                    Not Implemented
+                </p>
+                <p class="text-sm leading-relaxed mb-8" style="color: var(--text-dim)">
+                    The server does not support the functionality required to fulfill this request.<br>This feature has not been deployed yet.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="/home/" class="btn-nexus">Return to Feed</a>
+                    <a href="/" class="btn-nexus" style="background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                        Go to Homepage
+                    </a>
+                </div>
+
+                <p class="mono text-xs mt-8" style="color: rgba(255,255,255,0.15)">
+                    ERR_NOT_IMPLEMENTED · FEATURE_MISSING
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- EXCLUSIVE MINI-GAME -->
+    <div class="w-full max-w-lg mx-auto mt-6">
+        <div class="glass-panel p-4" style="border-color: rgba(0,229,255,0.2); background: rgba(0,0,0,0.45);">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e5ff;box-shadow:0 0 6px #00e5ff;flex-shrink:0;"></span>
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent); opacity: 0.65">// chart_the_uncharted</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="mono" style="color:rgba(255,215,0,0.5);font-size:0.6rem;letter-spacing:0.1em;">◈ EXCLUSIVE</span>
+                    <span class="mono text-xs font-bold" style="color: rgba(0,229,255,0.5)">ROUTE.SNAKE</span>
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="560" height="220"
+                data-title="ROUTE.SNAKE"
+                data-hi="nexnet_snake_hi"
+                style="width:100%; height:auto; border-radius:10px; display:block; cursor:pointer; background: rgba(0,0,0,0.35);"
+                aria-label="ROUTE.SNAKE exclusive mini-game"></canvas>
+            <p class="mono text-xs mt-2 text-center" style="color: rgba(255,255,255,0.12)">
+                ARROWS &middot; WASD &middot; SWIPE &mdash; CHART A NEW PATH
+            </p>
+        </div>
+    </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+    <script>
+(function () {
+    var C = document.getElementById('gameCanvas');
+    var ctx = C.getContext('2d');
+    var W = C.width, H = C.height;
+    var CYAN = '#00e5ff', FOOD_C = '#ffd700';
+    var CELL = 20, COLS = Math.floor(W/CELL), ROWS = Math.floor(H/CELL);
+    var HI_KEY = C.getAttribute('data-hi') || 'nexnet_snake_hi';
+    var hi = parseInt(localStorage.getItem(HI_KEY)||'0',10);
+    var snake, dir, nextDir, food, score, state, timer, speed, step;
+    function init() {
+        snake=[{c:Math.floor(COLS/2),r:Math.floor(ROWS/2)},{c:Math.floor(COLS/2)-1,r:Math.floor(ROWS/2)},{c:Math.floor(COLS/2)-2,r:Math.floor(ROWS/2)}];
+        dir={dc:1,dr:0}; nextDir={dc:1,dr:0}; score=0; state='idle'; speed=130; step=0;
+        spawnFood();
+    }
+    function spawnFood() {
+        var cells=[]; for(var c=0;c<COLS;c++) for(var r=0;r<ROWS;r++) {
+            var ok=true; for(var i=0;i<snake.length;i++) if(snake[i].c===c&&snake[i].r===r){ok=false;break;}
+            if(ok) cells.push({c:c,r:r});
+        }
+        food=cells[Math.floor(Math.random()*cells.length)];
+    }
+    function tick() {
+        if(state!=='playing') return;
+        dir=nextDir;
+        var head={c:(snake[0].c+dir.dc+COLS)%COLS, r:(snake[0].r+dir.dr+ROWS)%ROWS};
+        for(var i=0;i<snake.length;i++) if(snake[i].c===head.c&&snake[i].r===head.r){die();return;}
+        snake.unshift(head);
+        if(head.c===food.c&&head.r===food.r){score++;if(score>hi){hi=score;localStorage.setItem(HI_KEY,hi);}spawnFood();speed=Math.max(60,130-score*5);}
+        else snake.pop();
+    }
+    function die(){state='dead';}
+    function start(){if(state==='playing')return;init();state='playing';runTick();}
+    function runTick(){tick();if(state==='playing')setTimeout(runTick,speed);}
+    function draw() {
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle='rgba(0,229,255,0.05)';ctx.lineWidth=0.5;
+        for(var c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,H);ctx.stroke();}
+        for(var r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(W,r*CELL);ctx.stroke();}
+        if(food){
+            ctx.shadowColor=FOOD_C;ctx.shadowBlur=10;ctx.fillStyle=FOOD_C;
+            ctx.beginPath();ctx.arc(food.c*CELL+CELL/2,food.r*CELL+CELL/2,CELL/2-3,0,Math.PI*2);ctx.fill();
+            ctx.shadowBlur=0;
+        }
+        snake.forEach(function(s,i){
+            var alpha=i===0?1:0.7-i*(0.6/snake.length);
+            ctx.shadowColor=CYAN;ctx.shadowBlur=i===0?12:0;
+            ctx.fillStyle='rgba(0,229,255,'+(0.15+alpha*0.1)+')';ctx.strokeStyle=CYAN;
+            ctx.globalAlpha=Math.max(0.25,1-i*(0.8/snake.length));ctx.lineWidth=1.5;
+            ctx.beginPath();ctx.roundRect(s.c*CELL+1,s.r*CELL+1,CELL-2,CELL-2,3);ctx.fill();ctx.stroke();
+        });
+        ctx.globalAlpha=1;ctx.shadowBlur=0;
+        ctx.fillStyle='rgba(0,229,255,0.55)';ctx.font='10px "Fira Code",monospace';ctx.textAlign='left';ctx.fillText('SCORE '+(String(score).padStart?String(score).padStart(4,'0'):score),8,H-6);
+        ctx.fillStyle='rgba(0,229,255,0.25)';ctx.textAlign='right';ctx.fillText('BEST '+(String(hi).padStart?String(hi).padStart(4,'0'):hi),W-8,H-6);
+        if(state==='idle'||state==='dead'){
+            ctx.fillStyle='rgba(5,5,5,0.75)';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+            ctx.shadowColor=CYAN;ctx.shadowBlur=18;ctx.fillStyle=CYAN;ctx.font='bold 14px "Orbitron",sans-serif';ctx.textAlign='center';
+            ctx.fillText(C.getAttribute('data-title')||'NET.SNAKE',W/2,H/2-24);ctx.shadowBlur=0;
+            if(state==='dead'){ctx.fillStyle='rgba(0,229,255,0.5)';ctx.font='10px "Fira Code",monospace';ctx.fillText('SCORE: '+score+'  |  BEST: '+hi,W/2,H/2-6);}
+            ctx.fillStyle='rgba(0,229,255,0.4)';ctx.font='10px "Fira Code",monospace';
+            ctx.fillText('[ CLICK \u00b7 TAP TO '+(state==='idle'?'START':'RETRY')+' ]',W/2,H/2+12);
+            ctx.fillStyle='rgba(0,229,255,0.2)';ctx.font='9px "Fira Code",monospace';
+            ctx.fillText('ARROWS \u00b7 WASD \u00b7 SWIPE \u2014 COLLECT & GROW',W/2,H/2+28);
+        }
+        requestAnimationFrame(draw);
+    }
+    C.addEventListener('click',function(){if(state!=='playing')start();});
+    C.addEventListener('touchstart',function(e){e.preventDefault();if(state!=='playing'){start();}},{passive:false});
+    var tx=0,ty=0;
+    C.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+    C.addEventListener('touchend',function(e){
+        var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+        if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
+        if(Math.abs(dx)>Math.abs(dy)){nextDir=dx>0?{dc:1,dr:0}:{dc:-1,dr:0};}
+        else{nextDir=dy>0?{dc:0,dr:1}:{dc:0,dr:-1};}
+    },{passive:true});
+    document.addEventListener('keydown',function(e){
+        if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){e.preventDefault();if(dir.dr!==1)nextDir={dc:0,dr:-1};}
+        else if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){e.preventDefault();if(dir.dr!==-1)nextDir={dc:0,dr:1};}
+        else if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){if(dir.dc!==1)nextDir={dc:-1,dr:0};}
+        else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){if(dir.dc!==-1)nextDir={dc:1,dr:0};}
+        if(state!=='playing'&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();start();}
+    });
+    init(); draw();
+})();
+    </script>
+</body>
+</html>

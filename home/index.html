@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter / Home</title>
+    <link rel="icon" href="https://abs.twimg.com/favicons/twitter.2.ico" type="image/x-icon">
+    <style>
+        :root {
+            --twitter-blue: #1da1f2;
+            --bg: #f5f8fa;
+            --surface: #fff;
+            --border: #e6ecf0;
+            --text: #14171a;
+            --muted: #657786;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Helvetica Neue", Arial, sans-serif; }
+        .topbar { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border); backdrop-filter: blur(6px); }
+        .topbar-inner { max-width: 1200px; margin: 0 auto; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 20px; }
+        .brand img { width: 28px; height: 28px; }
+        .nav-links { display: flex; align-items: center; gap: 14px; font-size: 14px; }
+        .nav-links a, .nav-links button { border: none; background: transparent; color: #0f1419; text-decoration: none; cursor: pointer; font-size: 14px; font-weight: 700; padding: 8px 10px; border-radius: 999px; }
+        .nav-links a:hover, .nav-links button:hover { background: rgba(29,161,242,0.12); color: var(--twitter-blue); }
+        .layout { max-width: 1200px; margin: 18px auto; padding: 0 16px 22px; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .profile-cover { height: 82px; background: linear-gradient(120deg, #1da1f2 0%, #59c2ff 100%); }
+        .profile-body { padding: 0 14px 14px; }
+        .avatar { width: 68px; height: 68px; border-radius: 50%; border: 3px solid #fff; margin-top: -34px; background: #d9e2e8; display: grid; place-items: center; font-size: 25px; font-weight: 700; }
+        .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .profile-name { margin-top: 6px; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .profile-link { color: inherit; text-decoration: none; }
+        .profile-link:hover { text-decoration: underline; }
+        .profile-handle, .profile-bio { color: var(--muted); font-size: 14px; margin-top: 4px; }
+        .stats { margin-top: 12px; display: flex; gap: 18px; font-size: 13px; }
+        .stats b { font-size: 16px; display: block; color: #0f1419; }
+        .timeline { min-width: 0; }
+        .composer { padding: 14px; }
+        .composer textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; min-height: 120px; resize: vertical; padding: 12px; font-size: 16px; font-family: inherit; outline: none; transition: border-color 0.2s ease; }
+        .composer textarea:focus { border-color: var(--twitter-blue); }
+        .composer-actions { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .count { font-size: 13px; color: var(--muted); }
+        .count.warn { color: #d93025; font-weight: 700; }
+        .tweet-btn, .delete-btn { border: none; border-radius: 999px; font-weight: 700; cursor: pointer; }
+        .tweet-btn { background: var(--twitter-blue); color: #fff; padding: 10px 18px; min-width: 110px; }
+        .tweet-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .feed { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+        .tweet { padding: 14px; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
+        .tweet-avatar { width: 48px; height: 48px; border-radius: 50%; background: #d9e2e8; display: grid; place-items: center; font-weight: 700; color: #40556a; text-decoration: none; overflow: hidden; }
+        .tweet-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .tweet-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+        .tweet-author { font-weight: 800; }
+        .tweet-handle, .tweet-time { color: var(--muted); }
+        .tweet-text { margin-top: 4px; white-space: pre-wrap; line-height: 1.45; }
+        .tweet-footer { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .delete-btn { padding: 8px 12px; background: #ffe8e8; color: #b00020; }
+        .badge { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-size: 11px; font-weight: 800; }
+        .meta, .status, .empty-feed { color: var(--muted); font-size: 14px; }
+        .status { padding: 12px 14px; }
+        @media (max-width: 1020px) { .layout { grid-template-columns: minmax(0, 1fr); } .left { display: none; } }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="../home/"><img src="https://abs.twimg.com/favicons/twitter.2.ico" alt="Twitter Logo"><span>Twitter</span></a>
+        <nav class="nav-links">
+            <a href="../home/">Home</a>
+            <a id="profile-link" href="../profile/">Profile</a>
+            <a href="../settings/">Settings</a>
+            <button id="logout" type="button">Logout</button>
+        </nav>
+    </div>
+</header>
+
+<main class="layout">
+    <aside class="left">
+        <section class="card">
+            <div class="profile-cover"></div>
+            <div class="profile-body">
+                <div class="avatar" id="profile-avatar">?</div>
+                <div class="profile-name">
+                    <a class="profile-link" id="profile-name-link" href="../profile/"><span id="profile-name">Loading...</span></a>
+                    <span class="badge" id="profile-badge" aria-label="Verification">✓</span>
+                </div>
+                <div class="profile-handle" id="profile-handle">@...</div>
+                <div class="profile-bio" id="profile-bio">Loading profile...</div>
+                <div class="stats">
+                    <div><b id="stat-tweets">0</b>Posts</div>
+                    <div><b id="stat-level">none</b>Tier</div>
+                </div>
+            </div>
+        </section>
+    </aside>
+
+    <section class="timeline">
+        <section class="card composer">
+            <textarea id="t-input" maxlength="280" placeholder="What's happening?"></textarea>
+            <div class="composer-actions">
+                <span class="count" id="char-count">280 characters</span>
+                <button class="tweet-btn" id="t-send" type="button" disabled>Tweet</button>
+            </div>
+        </section>
+        <div class="status" id="status" aria-live="polite"></div>
+        <section class="feed" id="feed"></section>
+    </section>
+</main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc, deleteDoc, where, getDocs, limit, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCz9fehRDGTBC7EQZehiVMNw7jUSSvzku4",
+        authDomain: "socialmedia-71e80.firebaseapp.com",
+        projectId: "socialmedia-71e80",
+        storageBucket: "socialmedia-71e80.firebasestorage.app",
+        messagingSenderId: "123307537043",
+        appId: "1:123307537043:web:de892b7015e37d96691366",
+        measurementId: "G-RC2M53VDH9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const inputEl = document.getElementById("t-input");
+    const sendEl = document.getElementById("t-send");
+    const countEl = document.getElementById("char-count");
+    const feedEl = document.getElementById("feed");
+    const statusEl = document.getElementById("status");
+
+    let currentUser = null;
+    let profile = null;
+    const profileCache = new Map();
+    const likedPostIds = new Set();
+
+    const verifyColors = { person: "#1d9bf0", org: "#ffd700", gov: "#8b98a5" };
+
+    function esc(value) {
+        return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function badgeHtml(verifiedType, verifiedBy) {
+        if (!verifiedType) return "";
+        const parts = String(verifiedType).split(";").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) return "";
+        const checks = parts.map((t) => {
+            const color = verifyColors[t] || verifyColors.person;
+            const tick = t === "org" ? "#050505" : "#ffffff";
+            return `<span class="badge" style="background:${color};color:${tick};">✓</span>`;
+        }).join("");
+        const logo = verifiedBy && verifiedBy.logo ? `<img src="${encodeURI(String(verifiedBy.logo))}" alt="Org" style="width:16px;height:16px;border-radius:3px;object-fit:cover;">` : "";
+        return `<span style="display:inline-flex;align-items:center;gap:4px;">${checks}${logo}</span>`;
+    }
+
+    function formatTime(ts) {
+        if (!ts?.toDate) return "now";
+        const date = ts.toDate();
+        const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (diffSec < 60) return "now";
+        if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
+        if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h`;
+        if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d`;
+        return date.toLocaleDateString("en-US");
+    }
+
+    function usernameFromEmail(email, uid) {
+        const base = email.split("@")[0].replace(/[^a-z0-9_]/gi, "_").toLowerCase().slice(0, 20) || "node";
+        return `node_${base}_${uid.slice(0, 4)}`;
+    }
+
+    async function ensureProfile(user) {
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) return snap.data();
+        const displayName = user.email.split("@")[0];
+        const newProfile = {
+            uid: user.uid,
+            email: user.email,
+            username: usernameFromEmail(user.email, user.uid),
+            displayName,
+            avatarInitials: displayName.slice(0, 2).toUpperCase(),
+            bio: "",
+            verified: false,
+            verifiedType: "",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
+        await setDoc(userRef, newProfile);
+        const created = await getDoc(userRef);
+        return created.data();
+    }
+
+    async function fetchProfiles(uids) {
+        const missing = uids.filter((uid) => uid && !profileCache.has(uid));
+        await Promise.all(missing.map(async (uid) => {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) profileCache.set(uid, snap.data());
+        }));
+    }
+
+    async function loadLikedPostIds() {
+        const likesQ = query(collection(db, "post_likes"), where("uid", "==", currentUser.uid));
+        const likesSnap = await getDocs(likesQ);
+        likesSnap.forEach((d) => likedPostIds.add(d.data().postId));
+    }
+
+    function updateComposerState() {
+        const left = 280 - inputEl.value.length;
+        countEl.textContent = `${left} characters`;
+        countEl.classList.toggle("warn", left < 30);
+        sendEl.disabled = !currentUser || !profile || !inputEl.value.trim();
+    }
+
+    function renderProfileCard(ownCount = 0) {
+        if (!profile) return;
+        const avatarEl = document.getElementById("profile-avatar");
+        const initials = profile.avatarInitials || (profile.displayName || "?").slice(0, 2).toUpperCase();
+        if (profile.avatarUrl) avatarEl.innerHTML = `<img src="${encodeURI(String(profile.avatarUrl))}" alt="">`;
+        else avatarEl.textContent = initials;
+
+        document.getElementById("profile-name").textContent = profile.displayName || "User";
+        document.getElementById("profile-handle").textContent = `@${profile.username || "node"}`;
+        document.getElementById("profile-bio").textContent = profile.bio || "";
+        document.getElementById("stat-tweets").textContent = String(ownCount);
+
+        const badge = document.getElementById("profile-badge");
+        if (profile.verified && profile.verifiedType) {
+            const first = profile.verifiedType.split(";")[0];
+            badge.style.display = "inline-grid";
+            badge.style.background = verifyColors[first] || "#1d9bf0";
+            badge.style.color = first === "org" ? "#050505" : "#ffffff";
+            document.getElementById("stat-level").textContent = profile.verifiedType;
+        } else {
+            badge.style.display = "none";
+            document.getElementById("stat-level").textContent = "none";
+        }
+    }
+
+    async function publishTweet() {
+        if (!currentUser || !profile) return;
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        sendEl.disabled = true;
+        statusEl.textContent = "Posting...";
+        try {
+            await addDoc(collection(db, "messages"), {
+                authorUid: currentUser.uid,
+                authorName: profile.displayName,
+                authorUsername: profile.username,
+                authorInitials: profile.avatarInitials,
+                content: text,
+                likes: 0,
+                createdAt: serverTimestamp()
+            });
+            inputEl.value = "";
+            updateComposerState();
+            statusEl.textContent = "";
+        } catch (error) {
+            statusEl.textContent = `Post failed: ${error.message}`;
+        }
+    }
+
+    async function toggleLike(messageId, alreadyLiked) {
+        const likeDocId = `${messageId}_${currentUser.uid}`;
+        const likeRef = doc(db, "post_likes", likeDocId);
+        const msgRef = doc(db, "messages", messageId);
+        const batch = writeBatch(db);
+        if (alreadyLiked) {
+            batch.delete(likeRef);
+            batch.update(msgRef, { likes: increment(-1) });
+        } else {
+            batch.set(likeRef, { uid: currentUser.uid, postId: messageId, createdAt: serverTimestamp() });
+            batch.update(msgRef, { likes: increment(1) });
+        }
+        await batch.commit();
+    }
+
+    async function deleteTweet(messageId) {
+        if (!confirm("Delete this post?")) return;
+        try { await deleteDoc(doc(db, "messages", messageId)); }
+        catch (error) { statusEl.textContent = `Delete failed: ${error.message}`; }
+    }
+
+    window.deleteTweet = deleteTweet;
+
+    function renderFeed(items) {
+        if (!items.length) {
+            feedEl.innerHTML = `<article class="card" style="padding:16px;"><div class="empty-feed">No posts yet.</div></article>`;
+            renderProfileCard(0);
+            return;
+        }
+
+        const ownCount = items.filter((it) => it.authorUid === currentUser.uid).length;
+        renderProfileCard(ownCount);
+
+        feedEl.innerHTML = items.map((item) => {
+            const author = profileCache.get(item.authorUid) || {};
+            const badge = author.verified && author.verifiedType ? badgeHtml(author.verifiedType, author.verifiedBy || null) : "";
+            const initials = author.avatarInitials || item.authorInitials || "?";
+            const avatarContent = author.avatarUrl ? `<img src="${encodeURI(String(author.avatarUrl))}" alt="">` : esc(initials);
+            const liked = likedPostIds.has(item.id);
+            const canDelete = item.authorUid === currentUser.uid;
+            const authorHref = `../profile/?uid=${encodeURIComponent(item.authorUid || "")}`;
+
+            return `
+                <article class="card tweet">
+                    <a class="tweet-avatar" href="${authorHref}">${avatarContent}</a>
+                    <div>
+                        <div class="tweet-head">
+                            <a class="tweet-author profile-link" href="${authorHref}">${esc(author.displayName || item.authorName || "User")}</a>
+                            ${badge}
+                            <span class="tweet-handle">@${esc(author.username || item.authorUsername || "node")}</span>
+                            <span class="tweet-time">· ${esc(formatTime(item.createdAt))}</span>
+                        </div>
+                        <div class="tweet-text">${esc(item.content || "")}</div>
+                        <div class="tweet-footer">
+                            <button class="delete-btn" style="background:${liked ? '#dbf0ff' : '#eef3f8'};color:${liked ? '#1d9bf0' : '#32506a'}" onclick="void(0)" data-like-id="${esc(item.id)}">Like ${Number(item.likes || 0)}</button>
+                            ${canDelete ? `<button class="delete-btn" onclick="deleteTweet('${esc(item.id)}')">Delete</button>` : ""}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join("");
+
+        feedEl.querySelectorAll("[data-like-id]").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                const id = btn.getAttribute("data-like-id");
+                const alreadyLiked = likedPostIds.has(id);
+                btn.disabled = true;
+                try {
+                    await toggleLike(id, alreadyLiked);
+                    if (alreadyLiked) likedPostIds.delete(id); else likedPostIds.add(id);
+                } finally { btn.disabled = false; }
+            });
+        });
+    }
+
+    inputEl.addEventListener("input", updateComposerState);
+    sendEl.addEventListener("click", publishTweet);
+
+    document.getElementById("logout").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "../";
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "../"; return; }
+
+        if (!user.emailVerified) {
+            const bypassSnap = await getDoc(doc(db, "users", user.uid));
+            if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
+                window.location.href = "../verify-email/";
+                return;
+            }
+        }
+
+        currentUser = user;
+        profile = await ensureProfile(user);
+        await loadLikedPostIds();
+        updateComposerState();
+
+        const profileHref = `../profile/?uid=${encodeURIComponent(user.uid)}`;
+        document.getElementById("profile-link").href = profileHref;
+        document.getElementById("profile-name-link").href = profileHref;
+
+        const feedQuery = query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(100));
+        onSnapshot(feedQuery, async (snap) => {
+            const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            await fetchProfiles([...new Set(items.map((item) => item.authorUid).filter(Boolean))]);
+            renderFeed(items);
+        }, (error) => { statusEl.textContent = `Feed error: ${error.message}`; });
+    });
+</script>
+</body>
+</html>

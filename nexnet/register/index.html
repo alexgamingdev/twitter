@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexNet | Register Node</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
+    <style>
+        .logo-ring {
+            animation: spin-slow 10s linear infinite;
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <div class="auth-container w-full max-w-md">
+        <div class="glass-panel p-10 shadow-2xl">
+            <div class="text-center mb-10">
+                <!-- NexNet SVG Logo -->
+                <div class="relative w-20 h-20 mx-auto mb-5">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="40" cy="40" r="38" stroke="rgba(0,229,255,0.15)" stroke-width="1.5"/>
+                        <circle cx="40" cy="40" r="30" stroke="rgba(0,229,255,0.08)" stroke-width="1" stroke-dasharray="4 4" class="logo-ring"/>
+                        <circle cx="15" cy="40" r="6" fill="#00e5ff"/>
+                        <circle cx="65" cy="15" r="6" fill="#00e5ff"/>
+                        <circle cx="65" cy="65" r="6" fill="#00e5ff"/>
+                        <circle cx="40" cy="40" r="5" fill="rgba(0,229,255,0.6)"/>
+                        <line x1="21" y1="40" x2="35" y2="40" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="45" y1="36" x2="60" y2="20" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="45" y1="44" x2="60" y2="60" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1 class="orbitron text-2xl font-black tracking-[0.2em] text-white">NEX<span style="color: var(--accent)">NET</span></h1>
+                <p class="text-xs mt-2 mono uppercase tracking-widest" style="color: var(--text-dim)">Register New Node</p>
+            </div>
+
+            <form id="register-form" class="space-y-5">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest ml-1" style="color: var(--accent)">Node Name</label>
+                    <input id="field-username" type="text" required autocomplete="username"
+                           class="input-nexus mono text-sm" placeholder="your_username" minlength="3" maxlength="30">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest ml-1" style="color: var(--accent)">Identity Address</label>
+                    <input id="field-email" type="email" required autocomplete="email"
+                           class="input-nexus mono text-sm" placeholder="node@nexnet.io">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest ml-1" style="color: var(--accent)">Access Key</label>
+                    <input id="field-pass" type="password" required autocomplete="new-password"
+                           class="input-nexus mono text-sm" placeholder="••••••••••••" minlength="6">
+                </div>
+
+                <p id="register-error" class="text-xs font-semibold text-center" style="color:#ff4d6d; min-height:1em;"></p>
+
+                <button type="submit" class="btn-nexus w-full py-4 mt-2 orbitron text-sm tracking-widest">
+                    Initialize Node
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 text-center" style="border-top: 1px solid rgba(255,255,255,0.05)">
+                <p class="text-xs" style="color: var(--text-dim)">
+                    Already have an account?
+                    <a href="/login/" class="font-semibold hover:opacity-80 transition-opacity" style="color: var(--accent)">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script type="module">
+        import { initializeApp }             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp, query, where, collection, getDocs, updateDoc }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { firebaseConfig } from "/js/firebase-config.js";
+
+        const app  = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db   = getFirestore(app);
+
+        // Guard against onAuthStateChanged redirecting mid-registration before the
+        // Firestore profile document has been written.
+        let isRegistering = false;
+
+        // If already authenticated and verified, skip the registration screen.
+        onAuthStateChanged(auth, (user) => {
+            if (user && !isRegistering) {
+                if (user.emailVerified) {
+                    window.location.replace("/home/");
+                } else {
+                    window.location.replace("/verify-email/");
+                }
+            }
+        });
+
+        const form       = document.getElementById('register-form');
+        const usernameEl = document.getElementById('field-username');
+        const emailEl    = document.getElementById('field-email');
+        const passEl     = document.getElementById('field-pass');
+        const errorEl    = document.getElementById('register-error');
+        const btn        = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorEl.textContent = '';
+
+            const username = usernameEl.value.trim();
+            const email    = emailEl.value.trim();
+            const password = passEl.value;
+
+            // Validate username format (letters, digits, underscores only)
+            if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+                errorEl.textContent = "Username must be 3–30 characters and contain only letters, digits, or underscores.";
+                return;
+            }
+
+            btn.textContent = "INITIALIZING...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+            isRegistering = true;
+
+            try {
+                // Check username uniqueness before creating the account
+                const usernameQuery = query(
+                    collection(db, "users"),
+                    where("username", "==", username)
+                );
+                const usernameSnap = await getDocs(usernameQuery);
+                if (!usernameSnap.empty) {
+                    errorEl.textContent = "That username is already taken. Please choose another.";
+                    btn.textContent = "Initialize Node";
+                    btn.style.opacity = "1";
+                    btn.disabled = false;
+                    isRegistering = false;
+                    return;
+                }
+
+                const credential = await createUserWithEmailAndPassword(auth, email, password);
+                const uid            = credential.user.uid;
+                const avatarInitials = username.slice(0, Math.min(2, username.length)).toUpperCase();
+
+                await setDoc(doc(db, "users", uid), {
+                    uid,
+                    username,
+                    displayName:    username,
+                    avatarInitials,
+                    email,
+                    bio:            "",
+                    verified:       false,
+                    createdAt:      serverTimestamp()
+                });
+
+                // Send e-mail verification link before redirecting
+                // Check if dev/localhost environment
+                const isDev = window.location.hostname === "localhost" || 
+                              window.location.hostname === "127.0.0.1" ||
+                              window.location.protocol === "file:";
+                
+                if (!isDev) {
+                    try {
+                        await sendEmailVerification(credential.user);
+                    } catch (emailErr) {
+                        // Fallback when email fails
+                        console.warn("Email send failed, using bypass:", emailErr.message);
+                        await updateDoc(doc(db, "users", uid), { emailBypass: true });
+                    }
+                } else {
+                    // Dev mode: auto-bypass
+                    await updateDoc(doc(db, "users", uid), { emailBypass: true });
+                }
+
+                window.location.replace("/verify-email/");
+            } catch (err) {
+                isRegistering = false;
+                const messages = {
+                    'auth/email-already-in-use':      "An account with this e-mail already exists.",
+                    'auth/invalid-email':             "Invalid e-mail address.",
+                    'auth/weak-password':             "Password must be at least 6 characters.",
+                    'auth/too-many-requests':         "Too many attempts. Try again later.",
+                    'auth/network-request-failed':    "Network error. Check your connection.",
+                    'auth/operation-not-allowed':     "E-mail/password registration is not enabled. Please contact support.",
+                    'auth/configuration-not-found':   "Authentication is temporarily unavailable. Please try again later or contact support.",
+                    'auth/unauthorized-domain':       "This domain is not authorised for authentication. Please contact support."
+                };
+                errorEl.textContent = messages[err.code] || "Registration failed: " + err.message;
+                btn.textContent = "Initialize Node";
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
+        });
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>

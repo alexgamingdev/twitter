@@ -1,0 +1,226 @@
+:root {
+    --accent: #00e5ff;
+    --accent-dark: #0097a7;
+    --glass: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-main: #ffffff;
+    --text-dim: #94a3b8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #050505;
+    color: var(--text-main);
+    min-height: 100vh;
+}
+
+/* Glass Panels */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Utility classes used in HTML */
+.text-accent  { color: var(--accent); }
+.text-text-dim { color: var(--text-dim); }
+.mono { font-family: 'Fira Code', monospace; }
+
+/* Professional Buttons */
+.btn-nexus {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: #050505;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-nexus:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 229, 255, 0.4);
+    filter: brightness(1.1);
+}
+
+.input-nexus {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 14px 16px;
+    border-radius: 10px;
+    width: 100%;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-nexus:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
+}
+
+.input-nexus::placeholder { color: rgba(255,255,255,0.25); }
+
+.orbitron { font-family: 'Orbitron', sans-serif; }
+
+/* ── Verification Badges (X / NexNet style) ────────────────────────────── */
+.verified-badge-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    cursor: default;
+}
+
+.verified-check {
+    flex-shrink: 0;
+}
+
+/* Org logo shown next to the checkmark when verified by an organisation */
+.org-badge-logo {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* Tooltip — shown when the outer wrapper has a data-tip attribute */
+.verified-badge-wrap[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 0.65rem;
+    font-family: 'Fira Code', monospace;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    padding: 3px 8px;
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* ── Mobile bottom navigation ───────────────────────────────────────────── */
+.mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(5, 5, 5, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 0 env(safe-area-inset-bottom, 6px);
+}
+
+@media (max-width: 767px) {
+    .mobile-nav {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+    flex: 1;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+    color: var(--accent);
+}
+
+.btn-google {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-google:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ── "— or —" divider used on auth pages ───────────────────────────────── */
+.divider-or {
+    position: relative;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 1.25rem 0;
+}
+
+.divider-or::before,
+.divider-or::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 20px);
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.divider-or::before { left: 0; }
+.divider-or::after  { right: 0; }
+
+/* ── PWA Install button (revealed by pwa-install.js) ───────────────────── */
+#btn-pwa-install {
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    color: var(--accent);
+    background: rgba(0, 229, 255, 0.07);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+#btn-pwa-install:hover {
+    background: rgba(0, 229, 255, 0.14);
+    border-color: rgba(0, 229, 255, 0.6);
+    transform: translateY(-1px);
+}
+

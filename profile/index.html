@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitter / Profile</title>
+  <link rel="icon" href="https://abs.twimg.com/favicons/twitter.2.ico" type="image/x-icon">
+  <style>
+    :root { --twitter-blue:#1da1f2; --bg:#f5f8fa; --surface:#fff; --border:#e6ecf0; --text:#14171a; --muted:#657786; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Helvetica Neue", Arial, sans-serif; background:var(--bg); color:var(--text); }
+    .topbar { position:sticky; top:0; z-index:30; background:rgba(255,255,255,.96); border-bottom:1px solid var(--border); }
+    .topbar-inner { max-width:980px; margin:0 auto; height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+    .brand { display:flex; align-items:center; gap:8px; color:inherit; text-decoration:none; font-weight:800; }
+    .brand img { width:24px; height:24px; }
+    .nav a { color:#0f1419; text-decoration:none; font-weight:700; margin-left:8px; padding:8px 10px; border-radius:999px; }
+    .nav a:hover { background:rgba(29,161,242,.12); color:var(--twitter-blue); }
+    .page { max-width:980px; margin:16px auto; padding:0 16px 24px; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .cover { height:150px; background:linear-gradient(120deg,#1da1f2 0%,#59c2ff 100%); }
+    .cover img { width:100%; height:100%; object-fit:cover; }
+    .profile-body { padding:0 16px 16px; }
+    .profile-header-row { display:flex; align-items:flex-start; gap:12px; }
+    .avatar { width:94px; height:94px; border-radius:50%; border:4px solid #fff; margin-top:-47px; background:#d9e2e8; display:grid; place-items:center; font-weight:800; font-size:28px; overflow:hidden; flex-shrink:0; }
+    .avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .profile-info { flex:1; margin-top:-47px; padding-top:47px; }
+    .name-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .name { font-size:22px; font-weight:800; }
+    .badge { width:18px; height:18px; border-radius:50%; display:inline-grid; place-items:center; color:#fff; font-size:11px; font-weight:800; }
+    .handle, .bio, .meta { color:var(--muted); }
+    .bio { margin-top:8px; }
+    .stats { margin-top:10px; display:flex; gap:18px; font-size:14px; }
+    .stats b { color:#0f1419; }
+    .follow-row { margin-top:10px; display:flex; align-items:center; gap:10px; }
+    .follow-btn, .delete-btn { border:1px solid var(--border); border-radius:999px; font-weight:700; cursor:pointer; padding:8px 16px; background:var(--surface); color:var(--text); transition:all 0.2s ease; }
+    .follow-btn:hover { background:rgba(29,161,242,.12); border-color:var(--twitter-blue); color:var(--twitter-blue); }
+    .follow-btn.following { background:var(--twitter-blue); color:#fff; border-color:var(--twitter-blue); }
+    .delete-btn { background:#ffe8e8; color:#b00020; border-color:#ffe8e8; }
+    .feed { margin-top:14px; display:flex; flex-direction:column; gap:12px; }
+    .tweet { padding:14px; display:grid; grid-template-columns:52px minmax(0,1fr); gap:10px; }
+    .tweet-avatar { width:48px; height:48px; border-radius:50%; background:#d9e2e8; display:grid; place-items:center; overflow:hidden; font-weight:700; text-decoration:none; cursor:pointer; }
+    .tweet-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .tweet-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .tweet-text { margin-top:4px; white-space:pre-wrap; line-height:1.45; }
+    .tweet-footer { margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .like-btn { border:none; border-radius:999px; font-weight:700; cursor:pointer; padding:8px 12px; background:#eef3f8; color:#32506a; transition:all 0.2s ease; }
+    .like-btn.liked { background:#dbf0ff; color:#1d9bf0; }
+    .like-btn:hover { background:#dbf0ff; color:#1d9bf0; }
+    .status { color:var(--muted); padding:12px 14px; }
+    .follow-status { color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../home/"><img src="https://abs.twimg.com/favicons/twitter.2.ico" alt="Twitter Logo"><span>Twitter</span></a>
+    <nav class="nav"><a href="../home/">Home</a><a href="../settings/">Settings</a></nav>
+  </div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="cover" id="cover"></div>
+    <div class="profile-body">
+      <div class="profile-header-row">
+        <div class="avatar" id="avatar">?</div>
+      </div>
+      <div class="profile-info">
+        <div class="name-row"><div class="name" id="name">Loading...</div><span class="badge" id="badge">✓</span></div>
+        <div class="handle" id="handle">@...</div>
+        <div class="bio" id="bio"></div>
+        <div class="meta" id="meta"></div>
+        <div class="follow-row">
+          <button class="follow-btn" id="follow-btn" style="display:none;">Follow</button>
+          <span class="follow-status" id="follow-status"></span>
+        </div>
+        <div class="stats"><div><b id="posts-count">0</b> Posts</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed" id="feed"></section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, collection, query, where, orderBy, onSnapshot, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCz9fehRDGTBC7EQZehiVMNw7jUSSvzku4",
+    authDomain: "socialmedia-71e80.firebaseapp.com",
+    projectId: "socialmedia-71e80",
+    storageBucket: "socialmedia-71e80.firebasestorage.app",
+    messagingSenderId: "123307537043",
+    appId: "1:123307537043:web:de892b7015e37d96691366",
+    measurementId: "G-RC2M53VDH9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const params = new URLSearchParams(window.location.search);
+  const followBtn = document.getElementById("follow-btn");
+  const followStatusEl = document.getElementById("follow-status");
+
+  const verifyColors = { person: "#1d9bf0", org: "#ffd700", gov: "#8b98a5" };
+
+  function esc(value) {
+    return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function formatTime(ts) {
+    if (!ts?.toDate) return "now";
+    const date = ts.toDate();
+    const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diffSec < 60) return "now";
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h`;
+    if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d`;
+    return date.toLocaleDateString("en-US");
+  }
+
+  function renderProfile(profile) {
+    const avatar = document.getElementById("avatar");
+    if (profile.avatarUrl) avatar.innerHTML = `<img src="${encodeURI(String(profile.avatarUrl))}" alt="">`;
+    else avatar.textContent = (profile.avatarInitials || profile.displayName || "?").slice(0, 2).toUpperCase();
+
+    const cover = document.getElementById("cover");
+    if (profile.bannerUrl) cover.innerHTML = `<img src="${encodeURI(String(profile.bannerUrl))}" alt="">`;
+
+    document.getElementById("name").textContent = profile.displayName || "User";
+    document.getElementById("handle").textContent = `@${profile.username || "node"}`;
+    document.getElementById("bio").textContent = profile.bio || "";
+    document.getElementById("meta").textContent = [profile.location, profile.website].filter(Boolean).join(" · ");
+
+    const badge = document.getElementById("badge");
+    if (profile.verified && profile.verifiedType) {
+      const first = profile.verifiedType.split(";")[0];
+      badge.style.display = "inline-grid";
+      badge.style.background = verifyColors[first] || "#1d9bf0";
+      badge.style.color = first === "org" ? "#050505" : "#fff";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  async function getFollowState(fromUid, toUid) {
+    const followRef = doc(db, "follows", `${fromUid}__${toUid}`);
+    const snap = await getDoc(followRef);
+    return snap.exists();
+  }
+
+  async function setFollowState(fromUid, toUid, following) {
+    const followRef = doc(db, "follows", `${fromUid}__${toUid}`);
+    if (following) {
+      await setDoc(followRef, {
+        followerUid: fromUid,
+        followedUid: toUid,
+        createdAt: serverTimestamp()
+      });
+    } else {
+      await deleteDoc(followRef);
+    }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "../";
+      return;
+    }
+
+    const targetUid = params.get("uid") || user.uid;
+    const snap = await getDoc(doc(db, "users", targetUid));
+    if (!snap.exists()) {
+      document.getElementById("feed").innerHTML = `<article class="card"><div class="status">Profile not found.</div></article>`;
+      return;
+    }
+
+    const profile = snap.data();
+    renderProfile(profile);
+    followStatusEl.textContent = "";
+
+    if (targetUid === user.uid) {
+      followBtn.style.display = "none";
+      followBtn.disabled = true;
+      followBtn.classList.remove("following");
+      followStatusEl.textContent = "Open another profile to follow users.";
+    } else {
+      followBtn.style.display = "inline-block";
+      let following = await getFollowState(user.uid, targetUid);
+      followBtn.textContent = following ? "Following" : "Follow";
+      followBtn.classList.toggle("following", following);
+      followBtn.disabled = false;
+      followStatusEl.textContent = "";
+
+      followBtn.addEventListener("click", async () => {
+        followBtn.disabled = true;
+        followStatusEl.textContent = "Saving...";
+        try {
+          following = !following;
+          await setFollowState(user.uid, targetUid, following);
+          followBtn.textContent = following ? "Following" : "Follow";
+          followBtn.classList.toggle("following", following);
+          followStatusEl.textContent = following ? "You follow this user." : "You no longer follow this user.";
+        } catch (error) {
+          following = !following;
+          followStatusEl.textContent = `Follow failed: ${error.message}`;
+        } finally {
+          followBtn.disabled = false;
+        }
+      }, { once: false });
+    }
+
+    const q = query(collection(db, "messages"), where("authorUid", "==", targetUid), orderBy("createdAt", "desc"));
+    onSnapshot(q, (msgSnap) => {
+      document.getElementById("posts-count").textContent = String(msgSnap.size);
+      const feed = document.getElementById("feed");
+      if (msgSnap.empty) {
+        feed.innerHTML = `<article class="card"><div class="status">No posts yet.</div></article>`;
+        return;
+      }
+
+      feed.innerHTML = msgSnap.docs.map((d) => {
+        const m = d.data();
+        const avatarContent = profile.avatarUrl
+          ? `<img src="${encodeURI(String(profile.avatarUrl))}" alt="">`
+          : esc(profile.avatarInitials || "?");
+
+        return `
+          <article class="card tweet">
+            <div class="tweet-avatar">${avatarContent}</div>
+            <div>
+              <div class="tweet-head">
+                <strong>${esc(profile.displayName || m.authorName || "User")}</strong>
+                <span style="color:#657786">@${esc(profile.username || m.authorUsername || "node")}</span>
+                <span style="color:#657786">· ${esc(formatTime(m.createdAt))}</span>
+              </div>
+              <div class="tweet-text">${esc(m.content || "")}</div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore | NexNet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .user-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .user-card:hover {
+            border-color: rgba(0,229,255,0.25);
+            background: rgba(0,229,255,0.03);
+        }
+        .avatar-sm {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #050505;
+            flex-shrink: 0;
+        }
+        .post-card-sm {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            transition: border-color 0.2s ease;
+        }
+        .post-card-sm:hover { border-color: rgba(0,229,255,0.2); }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(0,229,255,0.08);
+            color: var(--accent);
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-btn:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="px-4 md:px-8 py-4 flex justify-between items-center fixed w-full z-50" style="background: rgba(5,5,5,0.7); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <div class="flex items-center gap-3">
+            <a href="/home/" class="flex items-center gap-3 no-underline">
+                <img src="/logo.svg" width="28" height="28" alt="NexNet">
+                <span class="orbitron text-base font-black tracking-widest text-white">NEX<span style="color:var(--accent)">NET</span></span>
+            </a>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/settings/" class="btn-nexus text-xs py-2 px-4">Settings</a>
+            <button id="btn-pwa-install" style="display:none" class="items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all" aria-label="Install App">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Install
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex min-h-screen pt-16">
+        <!-- Sidebar (hidden on mobile) -->
+        <aside class="hidden md:block w-60 fixed h-full pt-6 px-4" style="border-right: 1px solid rgba(255,255,255,0.05);">
+            <nav class="flex flex-col gap-1 mt-4">
+                <a href="/home/" class="sidebar-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Network Feed
+                </a>
+                <a href="/explore/" class="sidebar-item active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Explore Nodes
+                </a>
+                <a href="/notifications/" class="sidebar-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    Notifications
+                </a>
+                <a href="/settings/" class="sidebar-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1-14.14 0"/><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+                    Settings
+                </a>
+            </nav>
+
+            <div id="sidebar-node" class="mt-8 p-3 rounded-xl hidden" style="background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.1);">
+                <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:var(--accent)">Your Node</p>
+                <a id="sidebar-node-link" href="#" class="text-sm font-semibold text-white hover:opacity-70 block">—</a>
+                <p class="text-[10px] mono mt-0.5" style="color:var(--text-dim)">Active · Online</p>
+                <button id="btn-logout" class="mt-3 text-[10px] mono uppercase tracking-widest hover:opacity-70 transition-opacity w-full text-left" style="color:var(--text-dim)">← Disconnect</button>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="md:ml-60 flex-1 max-w-2xl px-4 md:px-6 py-6 mx-auto pb-20 md:pb-6">
+            <h2 class="orbitron text-xl font-black mb-5 text-white">Explore <span style="color:var(--accent)">Nodes</span></h2>
+
+            <!-- Search -->
+            <div class="relative mb-6">
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="search-input" type="text" placeholder="Search usernames or display names…"
+                       class="input-nexus pl-10 text-sm w-full">
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b mb-5" style="border-color: rgba(255,255,255,0.06);">
+                <button class="tab-btn active" id="tab-users"  onclick="switchTab('users')">Nodes</button>
+                <button class="tab-btn"        id="tab-recent" onclick="switchTab('recent')">Recent Posts</button>
+            </div>
+
+            <!-- Nodes tab -->
+            <div id="panel-users">
+                <div id="users-list" class="space-y-3">
+                    <p class="text-xs mono py-4 text-center" style="color:var(--text-dim)">Loading nodes...</p>
+                </div>
+            </div>
+
+            <!-- Recent Posts tab -->
+            <div id="panel-recent" class="hidden space-y-3">
+                <p id="recent-loading" class="text-xs mono py-4 text-center" style="color:var(--text-dim)">Loading posts...</p>
+            </div>
+        </main>
+
+        <!-- Right Panel (hidden on smaller screens) -->
+        <aside class="hidden xl:block w-64 fixed right-0 h-full pt-6 px-4" style="border-left: 1px solid rgba(255,255,255,0.05);">
+            <p class="text-[10px] font-bold uppercase tracking-widest mb-3 ml-1" style="color:var(--accent)">Trending Tags</p>
+            <div class="flex flex-wrap gap-2">
+                <span class="tag">#nexnet</span>
+                <span class="tag">#decentralized</span>
+                <span class="tag">#mesh</span>
+                <span class="tag">#protocol</span>
+                <span class="tag">#verified</span>
+                <span class="tag">#relay</span>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Mobile bottom navigation -->
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+        <a href="/home/" class="mobile-nav-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Feed
+        </a>
+        <a href="/explore/" class="mobile-nav-item active">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Explore
+        </a>
+        <a href="/notifications/" class="mobile-nav-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Alerts
+        </a>
+        <a href="/settings/" class="mobile-nav-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1-14.14 0"/><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+            Settings
+        </a>
+    </nav>
+
+
+    <script src="/js/space.js"></script>
+    <script src="/js/pwa-install.js"></script>
+    <script type="module">
+        import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, limit,
+                 onSnapshot, doc, getDoc, getDocs, where }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { firebaseConfig, verifiedBadgeHtml } from "/js/firebase-config.js";
+
+        const app  = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db   = getFirestore(app);
+
+        let allUsers  = [];
+        let currentUser = null;
+        const profileCache = new Map();  // uid → Firestore profile data
+
+        async function fetchProfiles(uids) {
+            const missing = uids.filter(uid => !profileCache.has(uid));
+            if (!missing.length) return;
+            await Promise.all(missing.map(async uid => {
+                try {
+                    const snap = await getDoc(doc(db, "users", uid));
+                    if (snap.exists()) profileCache.set(uid, snap.data());
+                } catch (_) {}
+            }));
+        }
+
+        // ── Auth ──────────────────────────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                const meSnap = await getDoc(doc(db, "users", user.uid));
+                const me     = meSnap.exists() ? meSnap.data() : {};
+                const sidebarNode = document.getElementById('sidebar-node');
+                sidebarNode.classList.remove('hidden');
+                document.getElementById('sidebar-node-link').textContent = me.username || user.email;
+                document.getElementById('sidebar-node-link').href = `/profile/?uid=${encodeURIComponent(user.uid)}`;
+                document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+            }
+        });
+
+        // ── Load Users ────────────────────────────────────────────────────────
+        const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(50));
+        onSnapshot(usersQuery, (snapshot) => {
+            allUsers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderUsers(allUsers);
+        });
+
+        function renderUsers(users) {
+            const list = document.getElementById('users-list');
+            if (users.length === 0) {
+                list.innerHTML = '<p class="text-xs mono py-4 text-center" style="color:var(--text-dim)">No nodes found.</p>';
+                return;
+            }
+            list.innerHTML = '';
+            users.forEach(u => {
+                const card = document.createElement('a');
+                card.href  = `/profile/?uid=${encodeURIComponent(u.id)}`;
+                card.className = 'user-card';
+
+                const badge = (u.verified && u.verifiedType)
+                    ? verifiedBadgeHtml(u.verifiedType, u.verifiedBy || null)
+                    : '';
+
+                card.innerHTML = `
+                    <div class="avatar-sm"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-sm font-bold text-white truncate">${esc(u.displayName || u.username)}</span>
+                            ${badge}
+                        </div>
+                        <p class="text-[11px] mono truncate" style="color:var(--text-dim)">@${esc(u.username || u.id)}</p>
+                        ${u.bio ? `<p class="text-[11px] mt-0.5 truncate" style="color:var(--text-dim)">${esc(u.bio)}</p>` : ''}
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                `;
+                const avatarEl = card.querySelector('.avatar-sm');
+                if (u.avatarUrl) {
+                    avatarEl.style.background = 'none';
+                    avatarEl.style.padding    = '0';
+                    const img = document.createElement('img');
+                    img.className = 'w-full h-full rounded-full object-cover';
+                    img.alt       = '';
+                    img.src       = u.avatarUrl;
+                    avatarEl.appendChild(img);
+                } else {
+                    avatarEl.textContent = u.avatarInitials || '?';
+                }
+                list.appendChild(card);
+            });
+        }
+
+        // ── Search ────────────────────────────────────────────────────────────
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            if (!q) { renderUsers(allUsers); return; }
+            const filtered = allUsers.filter(u =>
+                (u.username    || '').toLowerCase().includes(q) ||
+                (u.displayName || '').toLowerCase().includes(q)
+            );
+            renderUsers(filtered);
+        });
+
+        // ── Load Recent Posts ─────────────────────────────────────────────────
+        let recentLoaded = false;
+        function loadRecentPosts() {
+            if (recentLoaded) return;
+            recentLoaded = true;
+            const q = query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(30));
+            onSnapshot(q, async (snapshot) => {
+                // Fetch live profiles for all post authors
+                const authorUids = [...new Set(snapshot.docs.map(d => d.data().authorUid).filter(Boolean))];
+                await fetchProfiles(authorUids);
+
+                const panel = document.getElementById('panel-recent');
+                panel.innerHTML = '';
+                if (snapshot.empty) {
+                    panel.innerHTML = '<p class="text-xs mono py-4 text-center" style="color:var(--text-dim)">No posts yet.</p>';
+                    return;
+                }
+                snapshot.forEach(s => {
+                    const d    = s.data();
+                    const card = document.createElement('div');
+                    card.className = 'post-card-sm';
+
+                    // Use live profile data for badge and author info
+                    const authorProfile  = profileCache.get(d.authorUid);
+                    const authorName     = authorProfile?.displayName || d.authorName || '?';
+                    const authorUsername = authorProfile?.username    || d.authorUsername || '';
+                    const isVerified     = authorProfile?.verified && authorProfile?.verifiedType;
+                    const badge          = isVerified
+                        ? verifiedBadgeHtml(authorProfile.verifiedType, authorProfile.verifiedBy || null)
+                        : '';
+
+                    const ts = d.createdAt ? timeAgo(d.createdAt.toDate()) : '';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-2 mb-2">
+                            <a href="/profile/?uid=${encodeURIComponent(d.authorUid)}" class="avatar-sm flex-shrink-0" style="width:32px;height:32px;font-size:0.65rem;text-decoration:none;"></a>
+                            <a href="/profile/?uid=${encodeURIComponent(d.authorUid)}" class="text-sm font-bold text-white hover:opacity-70">${esc(authorName)}</a>
+                            ${badge}
+                            <span class="text-[10px] mono" style="color:var(--text-dim)">@${esc(authorUsername)} · ${ts}</span>
+                        </div>
+                        <p class="text-sm post-body" style="color:var(--text-dim)"></p>
+                        <p class="text-[11px] mt-2" style="color:var(--text-dim)">↑ ${d.likes || 0}</p>
+                    `;
+                    const avatarEl = card.querySelector('.avatar-sm');
+                    if (authorProfile?.avatarUrl) {
+                        avatarEl.style.background = 'none';
+                        avatarEl.style.padding    = '0';
+                        const img = document.createElement('img');
+                        img.className = 'w-full h-full rounded-full object-cover';
+                        img.alt       = '';
+                        img.src       = authorProfile.avatarUrl;
+                        avatarEl.appendChild(img);
+                    } else {
+                        avatarEl.textContent = authorProfile?.avatarInitials || d.authorInitials || '?';
+                    }
+                    card.querySelector('.post-body').textContent = d.content;
+                    panel.appendChild(card);
+                });
+            });
+        }
+
+        // ── Tabs ──────────────────────────────────────────────────────────────
+        window.switchTab = function(tab) {
+            document.getElementById('panel-users') .classList.toggle('hidden', tab !== 'users');
+            document.getElementById('panel-recent').classList.toggle('hidden', tab !== 'recent');
+            document.getElementById('tab-users')  .classList.toggle('active',  tab === 'users');
+            document.getElementById('tab-recent') .classList.toggle('active',  tab === 'recent');
+            if (tab === 'recent') loadRecentPosts();
+        };
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+        function timeAgo(date) {
+            const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+            if (diff < 60)    return diff + 's ago';
+            if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>

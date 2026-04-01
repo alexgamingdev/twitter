@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Settings | NexNet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .badge-type-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: rgba(255,255,255,0.04);
+            color: var(--text-dim);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .badge-type-btn:hover { background: rgba(255,255,255,0.08); }
+        .badge-type-btn.active-person { border-color: #1d9bf0; color: #1d9bf0; background: rgba(29,155,240,0.08); }
+        .badge-type-btn.active-org    { border-color: #FFD700; color: #FFD700; background: rgba(255,215,0,0.08); }
+        .badge-type-btn.active-gov    { border-color: #8b98a5; color: #8b98a5; background: rgba(139,152,165,0.08); }
+    </style>
+</head>
+<body class="flex items-start md:items-center justify-center min-h-screen p-4 md:p-6 pb-24 md:pb-6">
+    <div class="max-w-2xl w-full glass-panel p-5 md:p-10">
+        <a href="/home/" class="text-xs uppercase mb-8 block font-bold tracking-widest hover:opacity-70 transition-opacity" style="color: var(--accent)">← Back to Feed</a>
+
+        <div class="flex justify-between items-start mb-10">
+            <div>
+                <h1 class="orbitron text-3xl font-black">NODE <span style="color: var(--accent)">SETTINGS</span></h1>
+                <p class="text-sm mt-1" style="color: var(--text-dim)">Identity Management & Verification</p>
+            </div>
+            <!-- Dynamically populated badge shown when verified -->
+            <div id="header-badge" class="hidden flex items-center gap-2"></div>
+        </div>
+
+        <section class="space-y-8">
+            <!-- Profile Edit -->
+            <div class="p-6 rounded-xl" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06)">
+                <h3 class="font-bold mb-5 text-white">Edit Profile</h3>
+                <form id="profile-form" class="space-y-5">
+
+                    <!-- Avatar preview + upload -->
+                    <div class="flex items-center gap-5">
+                        <div id="avatar-preview" class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0 overflow-hidden"
+                             style="background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #050505;">?</div>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Profile Picture</label>
+                            <input type="file" id="p-avatar" accept="image/*" class="text-xs w-full" style="color:var(--text-dim)">
+                        </div>
+                    </div>
+
+                    <!-- Banner preview + upload -->
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Profile Banner</label>
+                        <div id="banner-preview" class="w-full h-20 rounded-lg mb-2 overflow-hidden"
+                             style="background: linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(0,151,167,0.12) 100%);"></div>
+                        <input type="file" id="p-banner" accept="image/*" class="text-xs w-full" style="color:var(--text-dim)">
+                    </div>
+
+                    <!-- Organisation Logo (shown only for org-verified accounts) -->
+                    <div id="org-logo-section" class="hidden">
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:#FFD700">Organisation Logo</label>
+                        <div class="flex items-center gap-4">
+                            <div id="org-logo-preview" class="w-12 h-12 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden"
+                                 style="background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.25); color:#FFD700;">?</div>
+                            <div class="flex-1">
+                                <input type="file" id="p-org-logo" accept="image/*" class="text-xs w-full" style="color:var(--text-dim)">
+                                <p class="text-[10px] mt-1" style="color:var(--text-dim)">Small logo shown next to verification badges you grant (max 64×64 px).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Username</label>
+                        <input type="text" id="p-username" class="input-nexus mono" placeholder="your_username" minlength="3" maxlength="30">
+                        <p class="text-[10px] mt-1" style="color:var(--text-dim)">3–30 characters. Letters, digits and underscores only.</p>
+                    </div>
+
+                    <!-- Display name -->
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Display Name</label>
+                        <input type="text" id="p-displayname" class="input-nexus" placeholder="Your display name" maxlength="50">
+                    </div>
+
+                    <!-- Bio -->
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Bio</label>
+                        <textarea id="p-bio" class="input-nexus h-20" placeholder="Tell the network about yourself…" maxlength="160"></textarea>
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Location</label>
+                        <input type="text" id="p-location" class="input-nexus" placeholder="City, Country" maxlength="50">
+                    </div>
+
+                    <!-- Website -->
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--accent)">Website</label>
+                        <input type="url" id="p-website" class="input-nexus" placeholder="https://yoursite.com">
+                    </div>
+
+                    <p id="profile-status" class="hidden text-xs font-semibold text-center" style="color:var(--accent)"></p>
+                    <button type="submit" class="btn-nexus w-full">Save Profile</button>
+                </form>
+            </div>
+
+            <!-- Node Identity -->
+            <div class="p-6 rounded-xl" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06)">
+                <h3 class="font-bold mb-4 text-white">Node Identity</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span style="color:var(--text-dim)">Handle</span>
+                        <a id="node-uid" href="javascript:void(0)" class="font-bold mono hover:opacity-70" style="color:var(--accent)">—</a>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span style="color:var(--text-dim)">Display Name</span>
+                        <span id="node-display" class="font-bold text-white">—</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span style="color:var(--text-dim)">E-Mail</span>
+                        <span id="node-email" class="font-bold text-white mono">—</span>
+                    </div>
+                    <div id="verified-by-row" class="hidden flex justify-between items-center text-xs">
+                        <span style="color:var(--text-dim)">Verified by</span>
+                        <span id="verified-by-name" class="font-bold text-white">—</span>
+                    </div>
+                </div>
+                <button id="btn-logout" class="mt-5 text-[10px] mono uppercase tracking-widest hover:opacity-70 transition-opacity" style="color:var(--text-dim)">← Disconnect Node</button>
+            </div>
+
+            <!-- Account Security -->
+            <div class="p-6 rounded-xl" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06)">
+                <h3 class="font-bold mb-5 text-white">Account Security</h3>
+
+                <!-- Change E-Mail -->
+                <div class="mb-6">
+                    <h4 class="text-[10px] font-bold uppercase tracking-widest mb-3" style="color:var(--accent)">Change E-Mail</h4>
+                    <form id="email-form" class="space-y-3">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--text-dim)">Current Password</label>
+                            <input type="password" id="email-current-pw" class="input-nexus" placeholder="Your current password" autocomplete="current-password">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--text-dim)">New E-Mail Address</label>
+                            <input type="email" id="email-new" class="input-nexus" placeholder="new@example.com" autocomplete="email">
+                        </div>
+                        <p id="email-status" class="hidden text-xs font-semibold"></p>
+                        <button type="submit" class="btn-nexus w-full">Update E-Mail</button>
+                    </form>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.06); margin: 1.25rem 0;"></div>
+
+                <!-- Change Password -->
+                <div>
+                    <h4 class="text-[10px] font-bold uppercase tracking-widest mb-3" style="color:var(--accent)">Change Password</h4>
+                    <form id="password-form" class="space-y-3">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--text-dim)">Current Password</label>
+                            <input type="password" id="pw-current" class="input-nexus" placeholder="Your current password" autocomplete="current-password">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--text-dim)">New Password</label>
+                            <input type="password" id="pw-new" class="input-nexus" placeholder="New password (min. 6 characters)" autocomplete="new-password">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest mb-1 block" style="color:var(--text-dim)">Confirm New Password</label>
+                            <input type="password" id="pw-confirm" class="input-nexus" placeholder="Repeat new password" autocomplete="new-password">
+                        </div>
+                        <p id="password-status" class="hidden text-xs font-semibold"></p>
+                        <button type="submit" class="btn-nexus w-full">Update Password</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Verification Request (hidden once verified) -->
+            <div id="verify-section" class="p-6 rounded-xl" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06)">
+                <h3 class="font-bold mb-2 text-white">Verification Request</h3>
+                <p class="text-xs mb-6 leading-relaxed" style="color: var(--text-dim)">
+                    Verification on NexNet is based on <strong class="text-white">notoriety</strong>, not payment.
+                    Choose the correct type for your account and submit for review.
+                </p>
+
+                <!-- Badge type selector -->
+                <div class="flex flex-wrap gap-2 mb-5" id="type-selector">
+                    <button type="button" data-type="person" class="badge-type-btn" id="btn-type-person">
+                        <svg class="inline mr-1" width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#1d9bf0"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                        Person
+                    </button>
+                    <button type="button" data-type="org" class="badge-type-btn" id="btn-type-org">
+                        <svg class="inline mr-1" width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#FFD700"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#050505" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                        Organisation
+                    </button>
+                    <button type="button" data-type="gov" class="badge-type-btn" id="btn-type-gov">
+                        <svg class="inline mr-1" width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#8b98a5"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                        Government
+                    </button>
+                </div>
+
+                <form id="verify-form" class="space-y-4">
+                    <input type="hidden" id="v-type" value="person">
+                    <input type="url" id="v-url" class="input-nexus" placeholder="Link to Portfolio, Wikipedia or Identity URL">
+                    <textarea id="v-reason" class="input-nexus h-24" placeholder="Brief explanation of why you deserve verification..."></textarea>
+                    <button class="btn-nexus w-full">Submit for Review</button>
+                </form>
+            </div>
+
+            <!-- Org-Issued Verification panel (only shown when canVerify == true) -->
+            <div id="org-verify-section" class="hidden p-6 rounded-xl" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,215,0,0.15)">
+                <h3 class="font-bold mb-2 text-white flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#FFD700"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#050505" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                    Grant Verification
+                </h3>
+                <p class="text-xs mb-5 leading-relaxed" style="color: var(--text-dim)">
+                    As a verified organisation or government account you can directly grant verified status to other users.
+                    Your logo will appear next to their badge.
+                </p>
+                <form id="org-verify-form" class="space-y-4">
+                    <input type="text" id="ov-uid" class="input-nexus" placeholder="Target user UID (exact Firebase UID)">
+                    <select id="ov-type" class="input-nexus" style="cursor:pointer">
+                        <option value="person">Person (blue)</option>
+                        <option value="org">Organisation (gold)</option>
+                    </select>
+                    <button class="btn-nexus w-full" style="background: linear-gradient(135deg,#FFD700,#b8950a); color:#050505">Grant Verification</button>
+                </form>
+                <p id="ov-status" class="hidden text-xs mt-3 text-center font-semibold" style="color:var(--accent)"></p>
+            </div>
+        </section>
+
+        <!-- Install App -->
+        <section id="install-section" class="mt-8 p-6 rounded-xl" style="background: rgba(0,229,255,0.04); border: 1px solid rgba(0,229,255,0.15)">
+            <h3 class="font-bold mb-2 text-white flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Install App
+            </h3>
+            <p class="text-xs mb-5 leading-relaxed" style="color: var(--text-dim)">
+                Add NexNet to your home screen for a native app experience — works on Android and iOS.
+            </p>
+            <button id="btn-pwa-install" style="display:none" class="btn-nexus w-full flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Install NexNet
+            </button>
+            <p id="install-standalone-msg" class="hidden text-xs text-center font-semibold" style="color:var(--accent)">
+                ✓ NexNet is already installed on this device.
+            </p>
+        </section>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script src="/js/pwa-install.js"></script>
+    <script>
+        // Hide the entire install section when already running as a standalone PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+            document.getElementById('install-section').style.display = 'none';
+        }
+    </script>
+    <script type="module">
+        import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut,
+                 updatePassword, reauthenticateWithCredential,
+                 EmailAuthProvider, verifyBeforeUpdateEmail }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, onSnapshot, addDoc, updateDoc, collection, serverTimestamp,
+                 setDoc, getDocs, query, where }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { firebaseConfig, verifiedBadgeHtml } from "/js/firebase-config.js";
+
+        const app  = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db   = getFirestore(app);
+
+        let currentUser    = null;
+        let currentProfile = null;
+        let profileLoaded  = false;
+
+        // ── Badge-type selector ─────────────────────────────────────────────
+        let selectedType = 'person';
+        document.querySelectorAll('.badge-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedType = btn.dataset.type;
+                document.getElementById('v-type').value = selectedType;
+                document.querySelectorAll('.badge-type-btn').forEach(b => {
+                    b.className = 'badge-type-btn';
+                });
+                btn.classList.add('active-' + selectedType);
+            });
+        });
+        // Activate default
+        document.getElementById('btn-type-person').classList.add('active-person');
+
+        // ── Auth Guard ─────────────────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.replace("/login/");
+                return;
+            }
+            if (!user.emailVerified) {
+                const bypassSnap = await getDoc(doc(db, "users", user.uid));
+                if (!bypassSnap.exists() || !bypassSnap.data().emailBypass) {
+                    window.location.replace("/verify-email/");
+                    return;
+                }
+            }
+            currentUser = user;
+
+            // Show e-mail address in Node Identity section
+            document.getElementById('node-email').textContent = user.email || '—';
+
+            // Listen for profile / verification status changes
+            onSnapshot(doc(db, "users", user.uid), (snap) => {
+                const data = snap.exists() ? snap.data() : {};
+                currentProfile = data;
+
+                // Identity row
+                const uidEl = document.getElementById('node-uid');
+                uidEl.textContent = data.username || user.email;
+                uidEl.href        = `/profile/?uid=${user.uid}`;
+                document.getElementById('node-display').textContent = data.displayName || '—';
+
+                // Populate profile-edit form on first load (not on every live update)
+                if (!profileLoaded) {
+                    profileLoaded = true;
+                    document.getElementById('p-username').value    = data.username    || '';
+                    document.getElementById('p-displayname').value = data.displayName || '';
+                    document.getElementById('p-bio').value         = data.bio         || '';
+                    document.getElementById('p-location').value    = data.location    || '';
+                    document.getElementById('p-website').value     = data.website     || '';
+
+                    // Avatar preview (DOM manipulation avoids XSS via URL injection)
+                    const avatarPrev = document.getElementById('avatar-preview');
+                    if (data.avatarUrl) {
+                        avatarPrev.innerHTML = '';
+                        const img = document.createElement('img');
+                        img.src = data.avatarUrl;
+                        img.className = 'w-full h-full object-cover rounded-full';
+                        img.alt = '';
+                        avatarPrev.appendChild(img);
+                    } else {
+                        avatarPrev.textContent = data.avatarInitials || '?';
+                    }
+
+                    // Banner preview (img element avoids CSS backgroundImage injection)
+                    const bannerPrev = document.getElementById('banner-preview');
+                    if (data.bannerUrl) {
+                        bannerPrev.innerHTML = '';
+                        const img = document.createElement('img');
+                        img.src = data.bannerUrl;
+                        img.className = 'w-full h-full object-cover';
+                        img.style.display = 'block';
+                        img.alt = '';
+                        bannerPrev.appendChild(img);
+                    }
+
+                    // Org logo preview (shown for org/gov accounts)
+                    if (data.orgLogo) {
+                        const orgLogoPrev = document.getElementById('org-logo-preview');
+                        orgLogoPrev.innerHTML = '';
+                        const img = document.createElement('img');
+                        img.src = data.orgLogo;
+                        img.className = 'w-full h-full object-contain';
+                        img.alt = '';
+                        orgLogoPrev.appendChild(img);
+                    }
+                }
+
+                // Verified-by row
+                if (data.verifiedBy && data.verifiedBy.name) {
+                    document.getElementById('verified-by-row').classList.remove('hidden');
+                    document.getElementById('verified-by-name').textContent = data.verifiedBy.name;
+                }
+
+                // Header badge
+                if (data.verified && data.verifiedType) {
+                    const headerBadge = document.getElementById('header-badge');
+                    headerBadge.classList.remove('hidden');
+                    headerBadge.innerHTML = verifiedBadgeHtml(data.verifiedType, data.verifiedBy || null)
+                        + `<span class="text-[10px] font-bold uppercase tracking-widest"
+                                style="color:var(--accent)">Verified</span>`;
+
+                    // Hide request form once verified
+                    document.getElementById('verify-section').style.display = 'none';
+                }
+
+                // Org-issued verification panel — shown for org/gov-verified accounts
+                const vTypes = data.verifiedType ? data.verifiedType.split(';') : [];
+                const isGov  = vTypes.includes('gov');
+                if (data.canVerify || vTypes.includes('org') || isGov) {
+                    document.getElementById('org-verify-section').classList.remove('hidden');
+                    document.getElementById('org-logo-section').classList.remove('hidden');
+                    // Gov accounts may additionally grant 'gov' verification
+                    if (isGov) {
+                        const ovType = document.getElementById('ov-type');
+                        if (!ovType.querySelector('option[value="gov"]')) {
+                            const opt = document.createElement('option');
+                            opt.value = 'gov';
+                            opt.textContent = 'Government (grey)';
+                            ovType.appendChild(opt);
+                        }
+                    }
+                }
+            });
+        });
+
+        // ── Logout ─────────────────────────────────────────────────────────
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        // ── Profile picture live preview ─────────────────────────────────
+        document.getElementById('p-avatar').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const prev = document.getElementById('avatar-preview');
+                prev.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = ev.target.result;
+                img.className = 'w-full h-full object-cover rounded-full';
+                img.alt = '';
+                prev.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('p-banner').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const prev = document.getElementById('banner-preview');
+                prev.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = ev.target.result;
+                img.className = 'w-full h-full object-cover';
+                img.style.display = 'block';
+                img.alt = '';
+                prev.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('p-org-logo').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const prev = document.getElementById('org-logo-preview');
+                prev.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = ev.target.result;
+                img.className = 'w-full h-full object-contain';
+                img.alt = '';
+                prev.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ── Helper: resize + compress an image File to a JPEG data URI ────────
+        // Images are stored directly in Firestore as compressed data URIs.
+        //
+        // @param {File}   file      - Image file selected by the user.
+        // @param {number} maxWidth  - Maximum output width in pixels (proportional scale).
+        // @param {number} maxHeight - Maximum output height in pixels (proportional scale).
+        // @param {number} [quality=0.82] - JPEG quality 0–1 (higher = larger file).
+        // @returns {Promise<string>} Resolves to a JPEG data URI string.
+        function fileToDataUrl(file, maxWidth, maxHeight, quality = 0.82) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.naturalWidth, height = img.naturalHeight;
+                        if (width > maxWidth)   { height = Math.round(height * maxWidth  / width);  width  = maxWidth;  }
+                        if (height > maxHeight) { width  = Math.round(width  * maxHeight / height); height = maxHeight; }
+                        const canvas = document.createElement('canvas');
+                        canvas.width  = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = ev.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ── Profile Edit ───────────────────────────────────────────────────
+        document.getElementById('profile-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const btn      = e.target.querySelector('button[type="submit"]');
+            const statusEl = document.getElementById('profile-status');
+            btn.disabled    = true;
+            btn.textContent = "Saving…";
+            statusEl.classList.add('hidden');
+
+            try {
+                const newUsername = document.getElementById('p-username').value.trim();
+
+                // Validate username format
+                if (!/^[a-zA-Z0-9_]{3,30}$/.test(newUsername)) {
+                    statusEl.textContent = "Username must be 3–30 characters (letters, digits, underscores only).";
+                    statusEl.style.color = '#ff4d6d';
+                    statusEl.classList.remove('hidden');
+                    btn.disabled    = false;
+                    btn.textContent = "Save Profile";
+                    return;
+                }
+
+                // Check username uniqueness only when it has changed
+                if (newUsername !== (currentProfile?.username ?? '')) {
+                    const snap = await getDocs(query(
+                        collection(db, "users"),
+                        where("username", "==", newUsername)
+                    ));
+                    // Reject if any matching document belongs to a different user
+                    if (snap.docs.some(d => d.id !== currentUser.uid)) {
+                        statusEl.textContent = "That username is already taken. Please choose another.";
+                        statusEl.style.color = '#ff4d6d';
+                        statusEl.classList.remove('hidden');
+                        btn.disabled    = false;
+                        btn.textContent = "Save Profile";
+                        return;
+                    }
+                }
+
+                const updates = {
+                    username:    newUsername,
+                    displayName: document.getElementById('p-displayname').value.trim(),
+                    bio:         document.getElementById('p-bio').value.trim(),
+                    location:    document.getElementById('p-location').value.trim(),
+                    website:     document.getElementById('p-website').value.trim(),
+                };
+
+                // Keep avatarInitials in sync when username changes
+                if (newUsername !== (currentProfile?.username ?? '')) {
+                    updates.avatarInitials = newUsername.slice(0, Math.min(2, newUsername.length)).toUpperCase();
+                }
+
+                // Compress avatar and store as data URI if a new file was selected
+                const avatarFile = document.getElementById('p-avatar').files[0];
+                if (avatarFile) {
+                    updates.avatarUrl = await fileToDataUrl(avatarFile, 256, 256, 0.82);
+                    const nameForInitials = updates.displayName || newUsername;
+                    if (nameForInitials) {
+                        updates.avatarInitials = nameForInitials.slice(0, Math.min(2, nameForInitials.length)).toUpperCase();
+                    }
+                }
+
+                // Compress banner and store as data URI if a new file was selected
+                const bannerFile = document.getElementById('p-banner').files[0];
+                if (bannerFile) {
+                    updates.bannerUrl = await fileToDataUrl(bannerFile, 640, 200, 0.82);
+                }
+
+                // Compress org logo and store as data URI if a new file was selected
+                const orgLogoFile = document.getElementById('p-org-logo').files[0];
+                if (orgLogoFile) {
+                    updates.orgLogo = await fileToDataUrl(orgLogoFile, 64, 64, 0.9);
+                }
+
+                // Use setDoc with merge:true so the save works even if the profile
+                // document was never created (e.g. accounts created before the fix).
+                await setDoc(doc(db, "users", currentUser.uid), updates, { merge: true });
+
+                statusEl.textContent = "Profile saved!";
+                statusEl.style.color = 'var(--accent)';
+                statusEl.classList.remove('hidden');
+
+                // Reset file inputs
+                document.getElementById('p-avatar').value = '';
+                document.getElementById('p-banner').value = '';
+                document.getElementById('p-org-logo').value = '';
+            } catch (err) {
+                statusEl.textContent = "Error: " + err.message;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = "Save Profile";
+            }
+        };
+
+        // ── Change E-Mail ──────────────────────────────────────────────────
+        document.getElementById('email-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('email-status');
+            const btn      = e.target.querySelector('button[type="submit"]');
+            statusEl.classList.add('hidden');
+
+            const currentPw = document.getElementById('email-current-pw').value;
+            const newEmail  = document.getElementById('email-new').value.trim();
+
+            if (!currentPw || !newEmail) {
+                statusEl.textContent = "Please fill in all fields.";
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled    = true;
+            btn.textContent = "Updating…";
+
+            try {
+                const credential = EmailAuthProvider.credential(currentUser.email, currentPw);
+                await reauthenticateWithCredential(currentUser, credential);
+                await verifyBeforeUpdateEmail(currentUser, newEmail);
+                statusEl.textContent = "Verification e-mail sent to " + newEmail + ". Please confirm the link to complete the change.";
+                statusEl.style.color = 'var(--accent)';
+                statusEl.classList.remove('hidden');
+                e.target.reset();
+            } catch (err) {
+                statusEl.textContent = "Error: " + err.message;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = "Update E-Mail";
+            }
+        };
+
+        // ── Change Password ────────────────────────────────────────────────
+        document.getElementById('password-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('password-status');
+            const btn      = e.target.querySelector('button[type="submit"]');
+            statusEl.classList.add('hidden');
+
+            const currentPw = document.getElementById('pw-current').value;
+            const newPw     = document.getElementById('pw-new').value;
+            const confirmPw = document.getElementById('pw-confirm').value;
+
+            if (!currentPw || !newPw || !confirmPw) {
+                statusEl.textContent = "Please fill in all fields.";
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+            if (newPw.length < 6) {
+                statusEl.textContent = "New password must be at least 6 characters.";
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+            if (newPw !== confirmPw) {
+                statusEl.textContent = "New passwords do not match.";
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled    = true;
+            btn.textContent = "Updating…";
+
+            try {
+                const credential = EmailAuthProvider.credential(currentUser.email, currentPw);
+                await reauthenticateWithCredential(currentUser, credential);
+                await updatePassword(currentUser, newPw);
+                statusEl.textContent = "Password updated successfully.";
+                statusEl.style.color = 'var(--accent)';
+                statusEl.classList.remove('hidden');
+                e.target.reset();
+            } catch (err) {
+                statusEl.textContent = "Error: " + err.message;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = "Update Password";
+            }
+        };
+
+        // ── Verification Request ───────────────────────────────────────────
+        document.getElementById('verify-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const btn = e.target.querySelector('button');
+            btn.disabled    = true;
+            btn.textContent = "Transmitting...";
+
+            try {
+                await addDoc(collection(db, "verification_requests"), {
+                    uid:     currentUser.uid,
+                    type:    document.getElementById('v-type').value,
+                    website: document.getElementById('v-url').value,
+                    reason:  document.getElementById('v-reason').value,
+                    date:    serverTimestamp()
+                });
+                alert("Verification request transmitted. Admin will review your submission.");
+                e.target.reset();
+                document.querySelectorAll('.badge-type-btn').forEach(b => b.className = 'badge-type-btn');
+                selectedType = 'person';
+                document.getElementById('btn-type-person').classList.add('active-person');
+                document.getElementById('v-type').value = 'person';
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = "Submit for Review";
+            }
+        };
+
+        // ── Org-Issued Verification ────────────────────────────────────────
+        document.getElementById('org-verify-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentProfile) return;
+
+            const btn = e.target.querySelector('button');
+            btn.disabled    = true;
+            btn.textContent = "Granting...";
+
+            const targetUid  = document.getElementById('ov-uid').value.trim();
+            const grantType  = document.getElementById('ov-type').value;
+            const statusEl   = document.getElementById('ov-status');
+
+            if (!targetUid) {
+                alert("Please enter a target user UID.");
+                btn.disabled = false;
+                btn.textContent = "Grant Verification";
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "users", targetUid), {
+                    verified:     true,
+                    verifiedType: grantType,
+                    verifiedBy: {
+                        uid:  currentUser.uid,
+                        name: currentProfile.displayName || '',
+                        logo: currentProfile.orgLogo || currentProfile.avatarUrl || ''
+                    }
+                });
+                await addDoc(collection(db, "org_verifications"), {
+                    issuedByUid:  currentUser.uid,
+                    issuedByName: currentProfile.displayName || '',
+                    issuedByLogo: currentProfile.orgLogo || currentProfile.avatarUrl || '',
+                    targetUid:    targetUid,
+                    type:         grantType,
+                    date:         serverTimestamp()
+                });
+                statusEl.textContent = "Verification successfully granted to the target profile.";
+                statusEl.classList.remove('hidden');
+                e.target.reset();
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = "Grant Verification";
+            }
+        };
+    </script>
+
+    <!-- Mobile bottom navigation -->
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+        <a href="/home/" class="mobile-nav-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Feed
+        </a>
+        <a href="/explore/" class="mobile-nav-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Explore
+        </a>
+        <a href="/notifications/" class="mobile-nav-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Alerts
+        </a>
+        <a href="/settings/" class="mobile-nav-item active">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1-14.14 0"/><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+            Settings
+        </a>
+    </nav>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>
+

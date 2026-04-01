@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter / E-Mail Verifizieren</title>
+    <link rel="icon" href="https://abs.twimg.com/favicons/twitter.2.ico" type="image/x-icon">
+    <style>
+        :root {
+            --twitter-blue: #1da1f2;
+            --bg: #f5f8fa;
+            --surface: #fff;
+            --border: #e6ecf0;
+            --text: #14171a;
+            --muted: #657786;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at top right, #e8f5fe 0%, var(--bg) 55%);
+            color: var(--text);
+        }
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 12px 28px rgba(15, 20, 25, 0.08);
+            padding: 24px;
+            text-align: center;
+        }
+        .logo { width: 42px; height: 42px; margin: 0 auto 12px; }
+        h1 { margin: 0 0 8px; font-size: 24px; }
+        p { margin: 8px 0; color: var(--muted); }
+        .mail { color: var(--twitter-blue); font-weight: 700; }
+        .status { min-height: 20px; font-size: 13px; margin-top: 10px; }
+        .btn-row { margin-top: 18px; display: grid; gap: 10px; }
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .primary { background: var(--twitter-blue); color: #fff; }
+        .ghost { background: #eef3f8; color: #284661; }
+    </style>
+</head>
+<body>
+<section class="card">
+    <img class="logo" src="https://abs.twimg.com/favicons/twitter.2.ico" alt="Twitter Logo">
+    <h1>E-Mail bestaetigen</h1>
+    <p>Wir haben dir einen Verifizierungslink gesendet an:</p>
+    <p class="mail" id="user-email">-</p>
+    <p>Nach Klick auf den Link wirst du automatisch weitergeleitet.</p>
+    <p class="status" id="status"></p>
+    <div class="btn-row">
+        <button class="primary" id="resend">E-Mail erneut senden</button>
+        <button class="ghost" id="logout">Abmelden</button>
+    </div>
+</section>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, sendEmailVerification, reload } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCz9fehRDGTBC7EQZehiVMNw7jUSSvzku4",
+        authDomain: "socialmedia-71e80.firebaseapp.com",
+        projectId: "socialmedia-71e80",
+        storageBucket: "socialmedia-71e80.firebasestorage.app",
+        messagingSenderId: "123307537043",
+        appId: "1:123307537043:web:de892b7015e37d96691366",
+        measurementId: "G-RC2M53VDH9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const statusEl = document.getElementById("status");
+    const userEmailEl = document.getElementById("user-email");
+
+    let cooldown = false;
+    let intervalId = null;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = "../";
+            return;
+        }
+
+        if (user.emailVerified) {
+            window.location.href = "../home/";
+            return;
+        }
+
+        const profileSnap = await getDoc(doc(db, "users", user.uid));
+        if (profileSnap.exists() && profileSnap.data().emailBypass) {
+            window.location.href = "../home/";
+            return;
+        }
+
+        userEmailEl.textContent = user.email || "-";
+
+        if (!intervalId) {
+            intervalId = setInterval(async () => {
+                try {
+                    await reload(user);
+                    if (auth.currentUser?.emailVerified) {
+                        clearInterval(intervalId);
+                        window.location.href = "../home/";
+                    }
+                } catch (_) {
+                }
+            }, 4000);
+        }
+    });
+
+    window.bypassEmailVerification = async function() {
+        const user = auth.currentUser;
+        if (!user) return;
+        await updateDoc(doc(db, "users", user.uid), { emailBypass: true });
+        window.location.href = "../home/";
+    };
+
+    document.getElementById("resend").addEventListener("click", async () => {
+        if (cooldown) {
+            statusEl.textContent = "Bitte kurz warten, bevor du erneut sendest.";
+            statusEl.style.color = "#b00020";
+            return;
+        }
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+            statusEl.textContent = "✓ Verifikation bestätigt - weiterleiten...";
+            statusEl.style.color = "#1da1f2";
+            cooldown = true;
+            await updateDoc(doc(db, "users", user.uid), { emailBypass: true });
+            setTimeout(() => { window.location.href = "../home/"; }, 500);
+        } catch (err) {
+            statusEl.textContent = `Fehler: ${err.message}`;
+            statusEl.style.color = "#b00020";
+        }
+    });
+
+    document.getElementById("logout").addEventListener("click", async () => {
+        if (intervalId) clearInterval(intervalId);
+        await signOut(auth);
+        window.location.href = "../";
+    });
+</script>
+</body>
+</html>

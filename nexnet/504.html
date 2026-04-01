@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexNet | 504 — Gateway Timeout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .error-code {
+            font-size: clamp(6rem, 20vw, 12rem);
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.18;
+            user-select: none;
+        }
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            91% { transform: translate(-2px, 1px); }
+            93% { transform: translate(2px, -1px); }
+            95% { transform: translate(-1px, 2px); }
+            97% { transform: translate(1px, -2px); }
+        }
+        .node-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6 pb-10">
+    <div id="nexnet-content">
+        <!-- Decorative icon -->
+        <div class="flex justify-center mb-6">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="node-pulse">
+                <circle cx="40" cy="40" r="38" stroke="rgba(0,229,255,0.12)" stroke-width="1.5"/>
+                <circle cx="40" cy="40" r="20" stroke="rgba(0,229,255,0.4)" stroke-width="2" fill="rgba(0,229,255,0.04)"/>
+                <line x1="40" y1="26" x2="40" y2="40" stroke="rgba(0,229,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="40" y1="40" x2="51" y2="48" stroke="rgba(0,229,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+                <path d="M28 14 L40 20 L52 14" stroke="rgba(0,229,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+        </div>
+
+        <div class="relative">
+            <div class="error-code orbitron font-black absolute inset-0 flex items-center justify-center pointer-events-none select-none glitch">
+                504
+            </div>
+
+            <div class="glass-panel p-10 relative z-10">
+                <div class="mb-2">
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent)">Error 504</span>
+                </div>
+                <h1 class="orbitron text-2xl font-black tracking-wider text-white mb-3">
+                    Gateway Timeout
+                </h1>
+                <p class="text-sm leading-relaxed mb-2 mono uppercase tracking-widest" style="color: rgba(255,255,255,0.35); font-size: 0.65rem;">
+                    Gateway Timeout
+                </p>
+                <p class="text-sm leading-relaxed mb-8" style="color: var(--text-dim)">
+                    The upstream node failed to respond within the allotted time window.<br>The gateway timed out waiting for a response.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="/home/" class="btn-nexus">Return to Feed</a>
+                    <a href="/" class="btn-nexus" style="background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                        Go to Homepage
+                    </a>
+                </div>
+
+                <p class="mono text-xs mt-8" style="color: rgba(255,255,255,0.15)">
+                    ERR_GATEWAY_TIMEOUT · UPSTREAM_SILENT
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- EXCLUSIVE MINI-GAME -->
+    <div class="w-full max-w-lg mx-auto mt-6">
+        <div class="glass-panel p-4" style="border-color: rgba(0,229,255,0.2); background: rgba(0,0,0,0.45);">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e5ff;box-shadow:0 0 6px #00e5ff;flex-shrink:0;"></span>
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent); opacity: 0.65">// beat_the_gateway_clock</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="mono" style="color:rgba(255,215,0,0.5);font-size:0.6rem;letter-spacing:0.1em;">◈ EXCLUSIVE</span>
+                    <span class="mono text-xs font-bold" style="color: rgba(0,229,255,0.5)">TIMEOUT.REFLEX</span>
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="560" height="160"
+                data-title="TIMEOUT.REFLEX"
+                data-hi="nexnet_reaction_hi"
+                style="width:100%; height:auto; border-radius:10px; display:block; cursor:pointer; background: rgba(0,0,0,0.35);"
+                aria-label="TIMEOUT.REFLEX exclusive mini-game"></canvas>
+            <p class="mono text-xs mt-2 text-center" style="color: rgba(255,255,255,0.12)">
+                CLICK WHEN GREEN &mdash; BEAT THE GATEWAY TIMEOUT
+            </p>
+        </div>
+    </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+    <script>
+(function () {
+    var C = document.getElementById('gameCanvas');
+    var ctx = C.getContext('2d');
+    var W = C.width, H = C.height, CYAN = '#00e5ff';
+    var HI_KEY = C.getAttribute('data-hi') || 'nexnet_reaction_hi';
+    var hi = parseInt(localStorage.getItem(HI_KEY)||'0',10); // lower = better
+    var state='idle', waitStart, readyStart, lastReact, penalty;
+    var R=54, CX=W/2, CY=H/2-8;
+    var circleCol='#333', labelText='', subText='';
+    function idle(){state='idle';circleCol='rgba(0,229,255,0.2)';labelText='';subText='';}
+    function startWait(){
+        state='waiting';circleCol='#ff3250';labelText='WAIT...';subText='';
+        var delay=1000+Math.random()*3000;
+        waitStart=Date.now();
+        setTimeout(function(){if(state==='waiting')startReady();},delay);
+    }
+    function startReady(){state='ready';circleCol='#00ff80';labelText='NOW!';subText='CLICK!';readyStart=Date.now();}
+    function react(){
+        if(state==='idle'){startWait();return;}
+        if(state==='waiting'){penalty=true;state='result';lastReact=null;circleCol='#ffd700';labelText='TOO EARLY!';subText='CLICK TO RETRY';}
+        else if(state==='ready'){
+            var t=Date.now()-readyStart;lastReact=t;
+            if(!hi||t<hi){hi=t;localStorage.setItem(HI_KEY,hi);}
+            state='result';penalty=false;circleCol=CYAN;labelText=t+'ms';subText='CLICK TO RETRY';
+        }
+        else if(state==='result'){startWait();}
+    }
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        ctx.shadowColor=circleCol;ctx.shadowBlur=state==='ready'?28:10;
+        ctx.fillStyle=circleCol.replace('#','rgba(').replace(/^rgba\(/,'rgba(')+'22';
+        // simpler:
+        ctx.globalAlpha=0.18;ctx.fillStyle=circleCol;
+        ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.fill();
+        ctx.globalAlpha=1;ctx.strokeStyle=circleCol;ctx.lineWidth=2.5;
+        ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+        if(labelText){
+            ctx.fillStyle=circleCol;ctx.font='bold 20px "Orbitron",sans-serif';ctx.textAlign='center';
+            ctx.shadowColor=circleCol;ctx.shadowBlur=12;ctx.fillText(labelText,CX,CY+7);ctx.shadowBlur=0;
+        }
+        if(subText){ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='9px "Fira Code",monospace';ctx.textAlign='center';ctx.fillText(subText,CX,CY+24);}
+        ctx.fillStyle='rgba(0,229,255,0.25)';ctx.font='10px "Fira Code",monospace';ctx.textAlign='right';ctx.fillText('BEST: '+(hi?hi+'ms':'--'),W-8,H-6);
+        if(state==='idle'){
+            ctx.fillStyle='rgba(5,5,5,0.8)';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+            ctx.shadowColor=CYAN;ctx.shadowBlur=18;ctx.fillStyle=CYAN;ctx.font='bold 14px "Orbitron",sans-serif';ctx.textAlign='center';
+            ctx.fillText(C.getAttribute('data-title')||'REFLEX.TEST',W/2,H/2-20);ctx.shadowBlur=0;
+            ctx.fillStyle='rgba(0,229,255,0.4)';ctx.font='10px "Fira Code",monospace';ctx.fillText('[ CLICK \u00b7 TAP TO START ]',W/2,H/2+6);
+            ctx.fillStyle='rgba(0,229,255,0.2)';ctx.font='9px "Fira Code",monospace';ctx.fillText('CLICK WHEN GREEN \u2014 BEAT YOUR BEST TIME',W/2,H/2+22);
+        }
+        requestAnimationFrame(draw);
+    }
+    C.addEventListener('click',function(){react();});
+    C.addEventListener('touchstart',function(e){e.preventDefault();react();},{passive:false});
+    document.addEventListener('keydown',function(e){if(e.code==='Space'){e.preventDefault();react();}});
+    draw();
+})();
+    </script>
+</body>
+</html>

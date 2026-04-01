@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexNet | Admin Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .req-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 1.25rem;
+            transition: border-color 0.2s ease;
+        }
+        .req-card:hover { border-color: rgba(0,229,255,0.2); }
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+        .badge-person { background: rgba(29,155,240,0.15);  color: #1d9bf0;  border: 1px solid rgba(29,155,240,0.3);  }
+        .badge-org    { background: rgba(255,215,0,0.12);   color: #FFD700;  border: 1px solid rgba(255,215,0,0.3);   }
+        .badge-gov    { background: rgba(139,152,165,0.12); color: #8b98a5; border: 1px solid rgba(139,152,165,0.3); }
+        .type-btn {
+            flex: 1;
+            padding: 9px 10px;
+            border-radius: 9px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: rgba(255,255,255,0.04);
+            color: var(--text-dim);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .type-btn:hover { background: rgba(255,255,255,0.08); }
+        .type-btn.active-person { border-color: #1d9bf0; color: #1d9bf0; background: rgba(29,155,240,0.08); }
+        .type-btn.active-org    { border-color: #FFD700; color: #FFD700; background: rgba(255,215,0,0.08);  }
+        .type-btn.active-gov    { border-color: #8b98a5; color: #8b98a5; background: rgba(139,152,165,0.08);}
+        .tool-panel {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1.5rem;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4d6d, #c9184a);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 9px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-block;
+        }
+        .btn-danger:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-accept {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-accept:hover { filter: brightness(1.1); }
+        .btn-reject {
+            background: rgba(255,77,109,0.12);
+            color: #ff4d6d;
+            border: 1px solid rgba(255,77,109,0.3);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-reject:hover { background: rgba(255,77,109,0.22); }
+        #login-screen, #admin-dashboard { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+
+    <!-- ═══════════════════════════════ LOGIN SCREEN ════════════════════════ -->
+    <div id="login-screen" class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-sm">
+            <div class="glass-panel p-10 shadow-2xl">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+                         style="background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00e5ff"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <h1 class="orbitron text-xl font-black tracking-widest text-white">ADMIN <span style="color:var(--accent)">PORTAL</span></h1>
+                    <p class="text-[10px] mt-1 mono uppercase tracking-widest" style="color: var(--text-dim)">Restricted Access</p>
+                </div>
+
+                <form id="login-form" class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold uppercase tracking-widest ml-1" style="color: var(--accent)">Username</label>
+                        <input id="admin-username" type="text" required autocomplete="off"
+                               class="input-nexus mono text-sm" placeholder="admin username">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold uppercase tracking-widest ml-1" style="color: var(--accent)">Password</label>
+                        <input id="admin-password" type="password" required autocomplete="off"
+                               class="input-nexus mono text-sm" placeholder="••••••••••••">
+                    </div>
+                    <p id="login-error" class="text-xs font-semibold text-center" style="color:#ff4d6d; min-height:1em;"></p>
+                    <button type="submit" class="btn-nexus w-full py-3 orbitron text-xs tracking-widest">
+                        Authenticate
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════ ADMIN DASHBOARD ═══════════════════════ -->
+    <div id="admin-dashboard" class="hidden max-w-6xl mx-auto">
+
+        <!-- Top bar -->
+        <div class="flex justify-between items-center py-5 mb-8"
+             style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <div class="flex items-center gap-3">
+                <img src="/logo.svg" width="28" height="28" alt="NexNet">
+                <span class="orbitron text-base font-black tracking-widest text-white">
+                    NEX<span style="color:var(--accent)">NET</span>
+                    <span class="text-xs font-normal ml-2 mono uppercase tracking-widest" style="color:var(--text-dim)">Admin</span>
+                </span>
+            </div>
+            <button id="btn-logout" class="text-[10px] mono uppercase tracking-widest hover:opacity-70 transition-opacity" style="color:var(--text-dim)">← Logout</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- ── Left column: Verification Requests ──────────────────────── -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="orbitron text-sm font-black tracking-widest" style="color:var(--accent)">VERIFICATION REQUESTS</h2>
+                    <span id="req-count" class="text-[10px] mono" style="color:var(--text-dim)">Loading…</span>
+                </div>
+                <p id="req-error" class="hidden text-xs font-semibold text-center py-2" style="color:#ff4d6d"></p>
+                <div id="requests-list" class="space-y-3">
+                    <p class="text-xs mono text-center pt-6" style="color:var(--text-dim)">Loading requests…</p>
+                </div>
+            </div>
+
+            <!-- ── Right column: Tools ─────────────────────────────────────── -->
+            <div class="space-y-6">
+
+                <!-- Direct Verify -->
+                <div class="tool-panel">
+                    <h3 class="orbitron text-xs font-black tracking-widest mb-4" style="color:var(--accent)">DIRECT VERIFY</h3>
+                    <p class="text-[11px] mb-4 leading-relaxed" style="color:var(--text-dim)">
+                        Grant verification to any user by their username — no request needed.
+                    </p>
+                    <form id="direct-verify-form" class="space-y-3">
+                        <input type="text" id="dv-username" class="input-nexus text-sm" placeholder="username" required>
+                        <div class="flex gap-1.5" id="dv-type-selector">
+                            <button type="button" data-type="person" class="type-btn active-person" id="dv-btn-person">
+                                <svg class="inline mr-1" width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#1d9bf0"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                                Person
+                            </button>
+                            <button type="button" data-type="org" class="type-btn" id="dv-btn-org">
+                                <svg class="inline mr-1" width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#FFD700"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#050505" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                                Org
+                            </button>
+                            <button type="button" data-type="gov" class="type-btn" id="dv-btn-gov">
+                                <svg class="inline mr-1" width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#8b98a5"/><path d="M4.5 8.5l2.3 2.3 4.7-4.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                                Gov
+                            </button>
+                        </div>
+                        <input type="hidden" id="dv-type" value="person">
+                        <button type="submit" class="btn-nexus w-full py-2.5 text-xs tracking-widest">
+                            Grant Verification
+                        </button>
+                        <p id="dv-status" class="hidden text-[11px] font-semibold text-center" style="color:var(--accent)"></p>
+                    </form>
+                </div>
+
+                <!-- Delete Verification -->
+                <div class="tool-panel" style="border-color: rgba(255,77,109,0.15)">
+                    <h3 class="orbitron text-xs font-black tracking-widest mb-4" style="color:#ff4d6d">REMOVE VERIFICATION</h3>
+                    <p class="text-[11px] mb-4 leading-relaxed" style="color:var(--text-dim)">
+                        Remove the verification badge from a user by their username.
+                    </p>
+                    <form id="delete-verify-form" class="space-y-3">
+                        <input type="text" id="del-username" class="input-nexus text-sm" placeholder="username" required>
+                        <button type="submit" class="btn-danger w-full py-2.5 text-xs tracking-widest">
+                            Remove Verification
+                        </button>
+                        <p id="del-status" class="hidden text-[11px] font-semibold text-center" style="color:var(--accent)"></p>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script type="module">
+        import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import {
+            getFirestore, collection, onSnapshot, query, orderBy,
+            doc, getDoc, updateDoc, deleteDoc, getDocs, where
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { firebaseConfig } from "/js/firebase-config.js";
+
+        // ── Hardcoded admin credentials ──────────────────────────────────────
+        const ADMIN_USER = 'alexgamingdev.tech';
+        const ADMIN_PASS = 'AAaa221199';
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+
+        // ── Session management ────────────────────────────────────────────────
+        const loginScreen   = document.getElementById('login-screen');
+        const dashboard     = document.getElementById('admin-dashboard');
+
+        function showDashboard() {
+            loginScreen.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            loadRequests();
+        }
+
+        function showLogin() {
+            sessionStorage.removeItem('nexnet_admin');
+            dashboard.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+        }
+
+        // Restore session across page reloads
+        if (sessionStorage.getItem('nexnet_admin') === '1') {
+            showDashboard();
+        }
+
+        // ── Login form ────────────────────────────────────────────────────────
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            const u = document.getElementById('admin-username').value.trim();
+            const p = document.getElementById('admin-password').value;
+            if (u === ADMIN_USER && p === ADMIN_PASS) {
+                sessionStorage.setItem('nexnet_admin', '1');
+                showDashboard();
+            } else {
+                document.getElementById('login-error').textContent = 'Invalid credentials.';
+            }
+        };
+
+        document.getElementById('btn-logout').addEventListener('click', showLogin);
+
+        // ── Load & render verification requests ───────────────────────────────
+        function badgePill(type) {
+            const map = {
+                person: ['badge-person', '● Person'],
+                org:    ['badge-org',    '● Organisation'],
+                gov:    ['badge-gov',    '● Government'],
+            };
+            const [cls, label] = map[type] || map.person;
+            return `<span class="badge-pill ${cls}">${label}</span>`;
+        }
+
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+
+        async function loadRequests() {
+            const listEl  = document.getElementById('requests-list');
+            const countEl = document.getElementById('req-count');
+            listEl.innerHTML = '<p class="text-xs mono text-center pt-6" style="color:var(--text-dim)">Loading…</p>';
+
+            const q = query(collection(db, 'verification_requests'), orderBy('date', 'desc'));
+            onSnapshot(q, async (snap) => {
+                countEl.textContent = snap.size + ' pending';
+                if (snap.empty) {
+                    listEl.innerHTML = '<p class="text-xs mono text-center pt-6" style="color:var(--text-dim)">No pending requests.</p>';
+                    return;
+                }
+
+                // Resolve all user profiles in parallel
+                const items = await Promise.all(snap.docs.map(async (d) => {
+                    const data = d.data();
+                    let username = data.uid;
+                    try {
+                        const userSnap = await getDoc(doc(db, 'users', data.uid));
+                        if (userSnap.exists()) username = userSnap.data().username || data.uid;
+                    } catch (_) { /* ignore */ }
+                    return { id: d.id, data, username };
+                }));
+
+                listEl.innerHTML = '';
+                items.forEach(({ id, data, username }) => {
+                    const ts = data.date ? new Date(data.date.toDate()).toLocaleString() : '—';
+                    const card = document.createElement('div');
+                    card.className = 'req-card';
+                    card.dataset.reqId  = id;
+                    card.dataset.uid    = data.uid;
+                    card.dataset.type   = data.type || 'person';
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="text-sm font-bold text-white">${esc(username)}</span>
+                                    ${badgePill(data.type || 'person')}
+                                </div>
+                                <p class="text-[10px] mono" style="color:var(--text-dim)">${esc(data.uid)} · ${ts}</p>
+                            </div>
+                            <div class="flex gap-2 flex-shrink-0">
+                                <button class="btn-accept btn-req-accept">Accept</button>
+                                <button class="btn-reject btn-req-reject">Reject</button>
+                            </div>
+                        </div>
+                        ${data.website ? `<p class="text-[11px] mb-1" style="color:var(--text-dim)">🔗 <a href="${esc(data.website)}" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-80">${esc(data.website)}</a></p>` : ''}
+                        ${data.reason ? `<p class="text-[11px] leading-relaxed" style="color:var(--text-dim)">${esc(data.reason)}</p>` : ''}
+                    `;
+
+                    // Accept
+                    card.querySelector('.btn-req-accept').addEventListener('click', async () => {
+                        await acceptRequest(id, data.uid, data.type || 'person');
+                    });
+                    // Reject
+                    card.querySelector('.btn-req-reject').addEventListener('click', async () => {
+                        await rejectRequest(id);
+                    });
+
+                    listEl.appendChild(card);
+                });
+            });
+        }
+
+        async function acceptRequest(reqId, uid, type) {
+            const errEl = document.getElementById('req-error');
+            try {
+                await updateDoc(doc(db, 'users', uid), {
+                    verified:     true,
+                    verifiedType: type,
+                    verifiedBy:   null
+                });
+                await deleteDoc(doc(db, 'verification_requests', reqId));
+                errEl.classList.add('hidden');
+            } catch (err) {
+                errEl.textContent = 'Error accepting request: ' + err.message;
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        async function rejectRequest(reqId) {
+            const errEl = document.getElementById('req-error');
+            try {
+                await deleteDoc(doc(db, 'verification_requests', reqId));
+                errEl.classList.add('hidden');
+            } catch (err) {
+                errEl.textContent = 'Error rejecting request: ' + err.message;
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        // ── Direct-verify type selector ────────────────────────────────────
+        const dvSelectedTypes = new Set(['person']);
+        document.querySelectorAll('#dv-type-selector .type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const t = btn.dataset.type;
+                if (dvSelectedTypes.has(t)) {
+                    if (dvSelectedTypes.size > 1) dvSelectedTypes.delete(t); // keep at least one selected
+                } else {
+                    dvSelectedTypes.add(t);
+                }
+                document.getElementById('dv-type').value = [...dvSelectedTypes].join(';');
+                document.querySelectorAll('#dv-type-selector .type-btn').forEach(b => {
+                    b.className = 'type-btn' + (dvSelectedTypes.has(b.dataset.type) ? ' active-' + b.dataset.type : '');
+                });
+            });
+        });
+
+        // ── Direct verify form ────────────────────────────────────────────
+        document.getElementById('direct-verify-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('dv-username').value.trim();
+            const type          = document.getElementById('dv-type').value;
+            const statusEl      = document.getElementById('dv-status');
+            const btn           = e.target.querySelector('button[type="submit"]');
+
+            if (!usernameInput) return;
+
+            btn.disabled    = true;
+            btn.textContent = 'Verifying…';
+            statusEl.classList.add('hidden');
+
+            try {
+                const uid = await resolveUsername(usernameInput);
+                if (!uid) {
+                    statusEl.textContent = `User "${usernameInput}" not found.`;
+                    statusEl.style.color = '#ff4d6d';
+                    statusEl.classList.remove('hidden');
+                    return;
+                }
+                await updateDoc(doc(db, 'users', uid), {
+                    verified:     true,
+                    verifiedType: type,
+                    verifiedBy:   null
+                });
+                statusEl.textContent = `✓ ${usernameInput} is now verified (${type}).`;
+                statusEl.style.color = 'var(--accent)';
+                statusEl.classList.remove('hidden');
+                e.target.reset();
+                dvSelectedTypes.clear();
+                dvSelectedTypes.add('person');
+                document.querySelectorAll('#dv-type-selector .type-btn').forEach(b => b.className = 'type-btn');
+                document.getElementById('dv-btn-person').classList.add('active-person');
+                document.getElementById('dv-type').value = 'person';
+            } catch (err) {
+                statusEl.textContent = 'Error: ' + err.message;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = 'Grant Verification';
+            }
+        };
+
+        // ── Delete verification form ──────────────────────────────────────
+        document.getElementById('delete-verify-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('del-username').value.trim();
+            const statusEl      = document.getElementById('del-status');
+            const btn           = e.target.querySelector('button[type="submit"]');
+
+            if (!usernameInput) return;
+
+            btn.disabled    = true;
+            btn.textContent = 'Removing…';
+            statusEl.classList.add('hidden');
+
+            try {
+                const uid = await resolveUsername(usernameInput);
+                if (!uid) {
+                    statusEl.textContent = `User "${usernameInput}" not found.`;
+                    statusEl.style.color = '#ff4d6d';
+                    statusEl.classList.remove('hidden');
+                    return;
+                }
+                await updateDoc(doc(db, 'users', uid), {
+                    verified:     false,
+                    verifiedType: null,
+                    verifiedBy:   null
+                });
+                statusEl.textContent = `✓ Verification removed from ${usernameInput}.`;
+                statusEl.style.color = 'var(--accent)';
+                statusEl.classList.remove('hidden');
+                e.target.reset();
+            } catch (err) {
+                statusEl.textContent = 'Error: ' + err.message;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = 'Remove Verification';
+            }
+        };
+
+        // ── Helpers ────────────────────────────────────────────────────────
+        async function resolveUsername(username) {
+            const q    = query(collection(db, 'users'), where('username', '==', username));
+            const snap = await getDocs(q);
+            if (snap.empty) return null;
+            return snap.docs[0].id;
+        }
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>

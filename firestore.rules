@@ -1,0 +1,125 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Returns the Firestore profile of the currently authenticated caller.
+    // Only call when request.auth != null has already been verified.
+    function callerData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // ─── Messages (public feed) ──────────────────────────────────────────────
+    // Anyone can read and create messages.
+    // Updates are restricted to the likes counter only.
+    // Authors may delete their own messages.
+    // The official Apple account (h9LplMNexsaNEwl0ATzWa3a94Z72) may also
+    // delete messages posted under the Apple Developer profile ('apple').
+    match /messages/{id} {
+      allow read, create: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
+      allow delete: if request.auth != null && (
+        resource.data.authorUid == request.auth.uid
+        || (request.auth.uid == 'h9LplMNexsaNEwl0ATzWa3a94Z72'
+            && resource.data.authorUid == 'apple')
+      );
+    }
+
+    // ─── Users ───────────────────────────────────────────────────────────────
+    // Public read-only.
+    // Authenticated users may create their own profile document (registration).
+    // Profile owners may update their own document, but may not change any
+    // verification fields (verified, verifiedType, verifiedBy, canVerify).
+    // Verification fields may be updated by the admin portal — restricted to
+    // those three fields only (admin portal does not use Firebase Auth, so
+    // request.auth is null for that code path).
+    //
+    // Fields editable by profile owner:
+    //   displayName, bio, avatarUrl, bannerUrl, avatarInitials, location, website
+    // Fields editable by admin only (no auth required = admin portal works):
+    //   verified      (bool)
+    //   verifiedType  ('person' | 'org' | 'gov')
+    //   verifiedBy    ({ uid, name, logo } | null)
+    //   canVerify     (bool)
+    //   followersCount, followingCount (number)
+    match /users/{userId} {
+      allow read: if true;
+      // Registration: a new user may create their own profile document.
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Profile owner: may update any fields except verification/admin fields.
+      // Admin portal: may update only verification fields (no auth required).
+      allow update: if (
+        request.auth != null && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['verified', 'verifiedType', 'verifiedBy', 'canVerify',
+                     'followersCount', 'followingCount'])
+      ) || (
+        request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['verified', 'verifiedType', 'verifiedBy'])
+      );
+    }
+
+    // ─── Verification Requests ────────────────────────────────────────────────
+    // Anyone can submit a verification request (create).
+    // The admin portal reads all pending requests and deletes them on
+    // accept / reject.
+    match /verification_requests/{id} {
+      allow read:   if true;
+      allow create: if true;
+      allow delete: if true;
+    }
+
+    // ─── Org-Issued Verifications ─────────────────────────────────────────────
+    // Verified organisations (verifiedType contains 'org') and accounts with
+    // canVerify == true may grant 'org' and 'person' verification.
+    // Government accounts (verifiedType contains 'gov') have the same rights as
+    // organisations and additionally may grant 'gov' verification.
+    match /org_verifications/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.issuedByUid == request.auth.uid
+        && (
+          // Organisations / canVerify accounts: may grant 'person' or 'org'
+          ((callerData().canVerify == true || callerData().verifiedType.split(';').hasAny(['org']))
+            && request.resource.data.type in ['org', 'person'])
+          ||
+          // Government accounts: may grant 'person', 'org', or 'gov'
+          (callerData().verifiedType.split(';').hasAny(['gov'])
+            && request.resource.data.type in ['org', 'person', 'gov'])
+        );
+      allow update, delete: if false;
+    }
+
+    // ─── Post Likes ───────────────────────────────────────────────────────────
+    // Tracks per-user likes (document ID = {postId}_{uid}).
+    // Enforces one vote per user per post: a user may only create/delete
+    // their own like document.
+    match /post_likes/{likeId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // ─── Follows ─────────────────────────────────────────────────────────────
+    // Document ID = {followerUid}__{followedUid}
+    // Authenticated users can follow/unfollow; everyone can read follow counts.
+    match /follows/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.followerUid == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.followerUid == request.auth.uid;
+    }
+
+    // ─── Notifications ────────────────────────────────────────────────────────
+    // Each user has their own sub-collection; only they can read their own.
+    // Writes are handled by backend/admin only (Cloud Functions).
+    match /notifications/{userId}/items/{itemId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+  }
+}

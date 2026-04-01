@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexNet | 500 — Core Meltdown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .error-code {
+            font-size: clamp(6rem, 20vw, 12rem);
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.18;
+            user-select: none;
+        }
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            91% { transform: translate(-2px, 1px); }
+            93% { transform: translate(2px, -1px); }
+            95% { transform: translate(-1px, 2px); }
+            97% { transform: translate(1px, -2px); }
+        }
+        .node-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6 pb-10">
+    <div id="nexnet-content">
+        <!-- Decorative icon -->
+        <div class="flex justify-center mb-6">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="node-pulse">
+                <circle cx="40" cy="40" r="38" stroke="rgba(0,229,255,0.12)" stroke-width="1.5"/>
+                <rect x="20" y="28" width="40" height="10" rx="3" stroke="rgba(0,229,255,0.45)" stroke-width="1.8" fill="rgba(0,229,255,0.04)"/>
+                <rect x="20" y="42" width="40" height="10" rx="3" stroke="rgba(0,229,255,0.45)" stroke-width="1.8" fill="rgba(0,229,255,0.04)"/>
+                <circle cx="54" cy="33" r="2" fill="rgba(0,229,255,0.5)"/>
+                <circle cx="54" cy="47" r="2" fill="rgba(0,229,255,0.2)"/>
+                <line x1="26" y1="33" x2="46" y2="33" stroke="rgba(0,229,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="26" y1="47" x2="46" y2="47" stroke="rgba(0,229,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="40" y1="58" x2="40" y2="64" stroke="rgba(0,229,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="34" y1="64" x2="46" y2="64" stroke="rgba(0,229,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <div class="relative">
+            <div class="error-code orbitron font-black absolute inset-0 flex items-center justify-center pointer-events-none select-none glitch">
+                500
+            </div>
+
+            <div class="glass-panel p-10 relative z-10">
+                <div class="mb-2">
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent)">Error 500</span>
+                </div>
+                <h1 class="orbitron text-2xl font-black tracking-wider text-white mb-3">
+                    Core Meltdown
+                </h1>
+                <p class="text-sm leading-relaxed mb-2 mono uppercase tracking-widest" style="color: rgba(255,255,255,0.35); font-size: 0.65rem;">
+                    Internal Server Error
+                </p>
+                <p class="text-sm leading-relaxed mb-8" style="color: var(--text-dim)">
+                    An unexpected fault occurred in the network core.<br>The server encountered an error it could not recover from.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="/home/" class="btn-nexus">Return to Feed</a>
+                    <a href="/" class="btn-nexus" style="background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                        Go to Homepage
+                    </a>
+                </div>
+
+                <p class="mono text-xs mt-8" style="color: rgba(255,255,255,0.15)">
+                    ERR_CORE_FAULT · UNHANDLED_EXCEPTION
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- EXCLUSIVE MINI-GAME -->
+    <div class="w-full max-w-lg mx-auto mt-6">
+        <div class="glass-panel p-4" style="border-color: rgba(0,229,255,0.2); background: rgba(0,0,0,0.45);">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e5ff;box-shadow:0 0 6px #00e5ff;flex-shrink:0;"></span>
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent); opacity: 0.65">// shatter_the_meltdown</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="mono" style="color:rgba(255,215,0,0.5);font-size:0.6rem;letter-spacing:0.1em;">◈ EXCLUSIVE</span>
+                    <span class="mono text-xs font-bold" style="color: rgba(0,229,255,0.5)">CORE.BREAK</span>
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="560" height="240"
+                data-title="CORE.BREAK"
+                data-hi="nexnet_bricks_hi"
+                style="width:100%; height:auto; border-radius:10px; display:block; cursor:pointer; background: rgba(0,0,0,0.35);"
+                aria-label="CORE.BREAK exclusive mini-game"></canvas>
+            <p class="mono text-xs mt-2 text-center" style="color: rgba(255,255,255,0.12)">
+                MOUSE &middot; TOUCH &mdash; BREAK THROUGH THE CORE
+            </p>
+        </div>
+    </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+    <script>
+(function () {
+    var C = document.getElementById('gameCanvas');
+    var ctx = C.getContext('2d');
+    var W = C.width, H = C.height, CYAN = '#00e5ff';
+    var HI_KEY = C.getAttribute('data-hi') || 'nexnet_bricks_hi';
+    var hi = parseInt(localStorage.getItem(HI_KEY)||'0',10);
+    var COLS=8, BW=62, BH=18, BGAP=4, BSX=18, BSY=15;
+    var BLK_COLORS=['rgba(170,0,255,0.7)','rgba(0,229,255,0.7)','rgba(0,255,128,0.7)','rgba(255,215,0,0.7)','rgba(255,50,80,0.7)'];
+    var PAD_W=90, PAD_H=12, PAD_Y=H-20, BALL_R=8;
+    var state='idle', padX, ball, bricks, score, parts=[];
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+            r=Math.min(r,w/2,h/2); this.moveTo(x+r,y); this.lineTo(x+w-r,y); this.arcTo(x+w,y,x+w,y+r,r);
+            this.lineTo(x+w,y+h-r); this.arcTo(x+w,y+h,x+w-r,y+h,r); this.lineTo(x+r,y+h);
+            this.arcTo(x,y+h,x,y+h-r,r); this.lineTo(x,y+r); this.arcTo(x,y,x+r,y,r); this.closePath();
+        };
+    }
+    function init() {
+        padX=W/2-PAD_W/2;
+        ball={x:W/2,y:PAD_Y-BALL_R-2,vx:2.8,vy:-3.5,active:false};
+        bricks=[]; score=0; parts=[];
+        for(var r=0;r<5;r++) for(var c=0;c<COLS;c++) {
+            bricks.push({x:BSX+c*(BW+BGAP),y:BSY+r*(BH+BGAP),w:BW,h:BH,alive:true,row:r});
+        }
+        state='idle';
+    }
+    function clamp(v,lo,hi2){return Math.max(lo,Math.min(hi2,v));}
+    function spawnParts(x,y,col){for(var i=0;i<8;i++){var a=Math.random()*Math.PI*2,v=1.5+Math.random()*3;parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:24,max:24,c:col});}}
+    function update() {
+        if(state!=='playing') return;
+        if(!ball.active){ball.x=padX+PAD_W/2;ball.y=PAD_Y-BALL_R-2;return;}
+        ball.x+=ball.vx; ball.y+=ball.vy;
+        if(ball.x-BALL_R<0){ball.x=BALL_R;ball.vx=Math.abs(ball.vx);}
+        if(ball.x+BALL_R>W){ball.x=W-BALL_R;ball.vx=-Math.abs(ball.vx);}
+        if(ball.y-BALL_R<0){ball.y=BALL_R;ball.vy=Math.abs(ball.vy);}
+        if(ball.y+BALL_R>PAD_Y&&ball.x>padX&&ball.x<padX+PAD_W){
+            ball.y=PAD_Y-BALL_R;ball.vy=-Math.abs(ball.vy);
+            ball.vx+=((ball.x-(padX+PAD_W/2))/(PAD_W/2))*2;
+            ball.vx=clamp(ball.vx,-7,7);
+        }
+        if(ball.y>H+20){state='dead';return;}
+        for(var i=0;i<bricks.length;i++){var b=bricks[i];if(!b.alive)continue;
+            if(ball.x+BALL_R>b.x&&ball.x-BALL_R<b.x+b.w&&ball.y+BALL_R>b.y&&ball.y-BALL_R<b.y+b.h){
+                b.alive=false; score++; if(score>hi){hi=score;localStorage.setItem(HI_KEY,hi);}
+                spawnParts(b.x+b.w/2,b.y+b.h/2,BLK_COLORS[b.row]);
+                var overlapX=Math.min(ball.x+BALL_R-b.x,b.x+b.w-ball.x+BALL_R);
+                var overlapY=Math.min(ball.y+BALL_R-b.y,b.y+b.h-ball.y+BALL_R);
+                if(overlapX<overlapY)ball.vx=-ball.vx; else ball.vy=-ball.vy;
+                break;
+            }
+        }
+        if(bricks.every(function(b){return !b.alive;})){state='won';}
+        parts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life--;});
+        parts=parts.filter(function(p){return p.life>0;});
+    }
+    function draw() {
+        ctx.clearRect(0,0,W,H);
+        bricks.forEach(function(b){
+            if(!b.alive)return;
+            ctx.shadowColor=BLK_COLORS[b.row];ctx.shadowBlur=6;
+            ctx.fillStyle=BLK_COLORS[b.row].replace('0.7','0.12');ctx.strokeStyle=BLK_COLORS[b.row];ctx.lineWidth=1.5;
+            ctx.beginPath();ctx.roundRect(b.x,b.y,b.w,b.h,3);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+        });
+        ctx.shadowColor=CYAN;ctx.shadowBlur=10;ctx.fillStyle='rgba(0,229,255,0.15)';ctx.strokeStyle=CYAN;ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.roundRect(padX,PAD_Y,PAD_W,PAD_H,4);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+        ctx.shadowColor=CYAN;ctx.shadowBlur=14;ctx.fillStyle=CYAN;
+        ctx.beginPath();ctx.arc(ball.x,ball.y,BALL_R,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+        parts.forEach(function(p){ctx.globalAlpha=p.life/p.max;ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=4;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
+        ctx.globalAlpha=1;ctx.shadowBlur=0;
+        ctx.fillStyle='rgba(0,229,255,0.55)';ctx.font='10px "Fira Code",monospace';ctx.textAlign='left';ctx.fillText('SCORE '+score,8,H-6);
+        ctx.fillStyle='rgba(0,229,255,0.25)';ctx.textAlign='right';ctx.fillText('BEST '+hi,W-8,H-6);
+        if(state==='idle'||state==='dead'||state==='won'){
+            ctx.fillStyle='rgba(5,5,5,0.75)';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+            ctx.shadowColor=CYAN;ctx.shadowBlur=18;ctx.fillStyle=CYAN;ctx.font='bold 14px "Orbitron",sans-serif';ctx.textAlign='center';
+            var t=state==='won'?'SYSTEM CLEARED!':state==='dead'?'BALL LOST':C.getAttribute('data-title')||'CORE.BREAK';
+            ctx.fillText(t,W/2,H/2-24);ctx.shadowBlur=0;
+            if(state!=='idle'){ctx.fillStyle='rgba(0,229,255,0.45)';ctx.font='10px "Fira Code",monospace';ctx.fillText('SCORE: '+score+'  |  BEST: '+hi,W/2,H/2-6);}
+            ctx.fillStyle='rgba(0,229,255,0.4)';ctx.font='10px "Fira Code",monospace';
+            ctx.fillText('[ CLICK \u00b7 TAP TO '+(state==='idle'?'LAUNCH':'RESTART')+' ]',W/2,H/2+12);
+            ctx.fillStyle='rgba(0,229,255,0.2)';ctx.font='9px "Fira Code",monospace';
+            ctx.fillText('MOVE MOUSE OR TOUCH \u2014 CLICK TO FIRE BALL',W/2,H/2+28);
+        }
+        requestAnimationFrame(draw);
+    }
+    C.addEventListener('mousemove',function(e){var rect=C.getBoundingClientRect();padX=clamp((e.clientX-rect.left)*(W/rect.width)-PAD_W/2,0,W-PAD_W);});
+    C.addEventListener('touchmove',function(e){e.preventDefault();var rect=C.getBoundingClientRect();padX=clamp((e.touches[0].clientX-rect.left)*(W/rect.width)-PAD_W/2,0,W-PAD_W);},{passive:false});
+    C.addEventListener('click',function(){if(state==='idle'||state==='dead'||state==='won'){init();state='playing';ball.active=false;}else if(state==='playing'&&!ball.active)ball.active=true;});
+    C.addEventListener('touchstart',function(e){e.preventDefault();if(state==='idle'||state==='dead'||state==='won'){init();state='playing';ball.active=false;}else if(state==='playing'&&!ball.active)ball.active=true;},{passive:false});
+    document.addEventListener('keydown',function(e){if(e.code==='Space'){e.preventDefault();if(state==='idle'||state==='dead'||state==='won'){init();state='playing';ball.active=false;}else if(!ball.active)ball.active=true;}});
+    init(); draw(); setInterval(update,1000/60);
+})();
+    </script>
+</body>
+</html>

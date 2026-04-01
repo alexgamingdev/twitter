@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify E-Mail | NexNet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
+    <style>
+        .logo-ring {
+            animation: spin-slow 10s linear infinite;
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <div class="auth-container w-full max-w-md">
+        <div class="glass-panel p-10 shadow-2xl text-center">
+            <!-- Logo -->
+            <div class="relative w-20 h-20 mx-auto mb-5">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="40" cy="40" r="38" stroke="rgba(0,229,255,0.15)" stroke-width="1.5"/>
+                    <circle cx="40" cy="40" r="30" stroke="rgba(0,229,255,0.08)" stroke-width="1" stroke-dasharray="4 4" class="logo-ring"/>
+                    <circle cx="15" cy="40" r="6" fill="#00e5ff"/>
+                    <circle cx="65" cy="15" r="6" fill="#00e5ff"/>
+                    <circle cx="65" cy="65" r="6" fill="#00e5ff"/>
+                    <circle cx="40" cy="40" r="5" fill="rgba(0,229,255,0.6)"/>
+                    <line x1="21" y1="40" x2="35" y2="40" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="45" y1="36" x2="60" y2="20" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="45" y1="44" x2="60" y2="60" stroke="#00e5ff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <h1 class="orbitron text-2xl font-black tracking-[0.2em] text-white mb-1">NEX<span style="color: var(--accent)">NET</span></h1>
+            <p class="text-xs mono uppercase tracking-widest mb-10" style="color: var(--text-dim)">E-Mail Verification</p>
+
+            <!-- Mail icon -->
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style="background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+            </div>
+
+            <h2 class="text-lg font-bold text-white mb-3">Confirm Your Identity Address</h2>
+            <p class="text-sm leading-relaxed mb-2" style="color: var(--text-dim)">
+                A verification link has been sent to
+            </p>
+            <p id="user-email" class="text-sm font-bold mono mb-6" style="color: var(--accent)">—</p>
+            <p class="text-xs leading-relaxed mb-8" style="color: var(--text-dim)">
+                Open the link in that e-mail to activate your account. This page will automatically redirect you once your e-mail is confirmed.
+            </p>
+
+            <!-- Polling indicator -->
+            <div class="flex items-center justify-center gap-2 mb-8">
+                <span class="w-2 h-2 rounded-full pulse-dot" style="background: var(--accent)"></span>
+                <span class="text-xs mono" style="color: var(--text-dim)">Waiting for confirmation…</span>
+            </div>
+
+            <p id="resend-status" class="hidden text-xs font-semibold mb-4"></p>
+
+            <button id="btn-resend" class="btn-nexus w-full mb-4">
+                Resend Verification E-Mail
+            </button>
+
+            <button id="btn-logout" class="text-[10px] mono uppercase tracking-widest hover:opacity-70 transition-opacity" style="color: var(--text-dim)">
+                ← Sign Out
+            </button>
+        </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script type="module">
+        import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, sendEmailVerification, reload }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { firebaseConfig }    from "/js/firebase-config.js";
+
+        const app  = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db   = getFirestore(app);
+
+        let pollingInterval = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                // Not logged in at all → go to login
+                window.location.replace("/login/");
+                return;
+            }
+
+            if (user.emailVerified) {
+                // Already verified → go straight to the feed
+                window.location.replace("/home/");
+                return;
+            }
+
+            // Check for team bypass flag in Firestore
+            try {
+                const profileSnap = await getDoc(doc(db, 'users', user.uid));
+                if (profileSnap.exists() && profileSnap.data().emailBypass) {
+                    window.location.replace("/home/");
+                    return;
+                }
+            } catch (_) {}
+
+            // Show the user's e-mail address
+            document.getElementById('user-email').textContent = user.email || '—';
+
+            // Poll Firebase every 4 seconds to detect when the user clicks the link
+            if (!pollingInterval) {
+                pollingInterval = setInterval(async () => {
+                    try {
+                        await reload(user);
+                        if (auth.currentUser && auth.currentUser.emailVerified) {
+                            clearInterval(pollingInterval);
+                            window.location.replace("/home/");
+                        }
+                    } catch (_) {}
+                }, 4000);
+            }
+        });
+
+        // ── Team bypass console command ────────────────────────────────────────
+        // Usage (browser DevTools console): bypassEmailVerification()
+        window.bypassEmailVerification = async function () {
+            const user = auth.currentUser;
+            if (!user) {
+                console.error('[NexNet] Not logged in.');
+                return;
+            }
+            try {
+                await updateDoc(doc(db, 'users', user.uid), { emailBypass: true });
+                console.log('[NexNet] E-Mail verification bypassed. Redirecting to feed…');
+                window.location.replace("/home/");
+            } catch (err) {
+                console.error('[NexNet] Bypass failed:', err.message);
+            }
+        };
+
+        // ── Resend verification e-mail ─────────────────────────────────────
+        let resendCooldown = false;
+
+        document.getElementById('btn-resend').addEventListener('click', async () => {
+            const statusEl = document.getElementById('resend-status');
+            if (resendCooldown) {
+                statusEl.textContent = "Please wait before requesting another e-mail.";
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                // Check if dev/localhost environment
+                const isDev = window.location.hostname === "localhost" || 
+                              window.location.hostname === "127.0.0.1" ||
+                              window.location.protocol === "file:";
+                
+                if (isDev) {
+                    statusEl.textContent = "🔧 Dev-Mode: E-Mail verification skipped.";
+                    statusEl.style.color = 'var(--accent)';
+                    statusEl.classList.remove('hidden');
+                    await updateDoc(doc(db, 'users', user.uid), { emailBypass: true });
+                    setTimeout(() => { window.location.replace("/home/"); }, 1000);
+                    return;
+                }
+
+                try {
+                    await sendEmailVerification(user);
+                    resendCooldown = true;
+                    statusEl.textContent = "✓ Verification e-mail resent. Please check your inbox.";
+                    statusEl.style.color = 'var(--accent)';
+                    statusEl.classList.remove('hidden');
+                    // Allow resending again after 60 seconds
+                    setTimeout(() => { resendCooldown = false; }, 60000);
+                } catch (emailErr) {
+                    // Fallback when email fails
+                    console.warn("Email send failed, using bypass:", emailErr.message);
+                    statusEl.textContent = "⚠️ E-Mail could not be sent, using bypass...";
+                    statusEl.style.color = '#ff9800';
+                    statusEl.classList.remove('hidden');
+                    await updateDoc(doc(db, 'users', user.uid), { emailBypass: true });
+                    setTimeout(() => { window.location.replace("/home/"); }, 1500);
+                }
+            } catch (err) {
+                statusEl.textContent = "Error: " + err.message;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.classList.remove('hidden');
+            }
+        });
+
+        // ── Sign out ───────────────────────────────────────────────────────
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            if (pollingInterval) clearInterval(pollingInterval);
+            await signOut(auth);
+            window.location.replace("/login/");
+        });
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>

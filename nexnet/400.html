@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexNet | 400 — Malformed Packet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00e5ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexNet">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <style>
+        .error-code {
+            font-size: clamp(6rem, 20vw, 12rem);
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.18;
+            user-select: none;
+        }
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            91% { transform: translate(-2px, 1px); }
+            93% { transform: translate(2px, -1px); }
+            95% { transform: translate(-1px, 2px); }
+            97% { transform: translate(1px, -2px); }
+        }
+        .node-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6 pb-10">
+    <div id="nexnet-content">
+        <!-- Decorative icon -->
+        <div class="flex justify-center mb-6">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="node-pulse">
+                <circle cx="40" cy="40" r="38" stroke="rgba(0,229,255,0.12)" stroke-width="1.5"/>
+                <path d="M40 18L66 62H14L40 18Z" stroke="rgba(0,229,255,0.5)" stroke-width="2" stroke-linejoin="round" fill="rgba(0,229,255,0.05)"/>
+                <line x1="40" y1="33" x2="40" y2="50" stroke="rgba(0,229,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="40" cy="56" r="2" fill="rgba(0,229,255,0.6)"/>
+            </svg>
+        </div>
+
+        <div class="relative">
+            <div class="error-code orbitron font-black absolute inset-0 flex items-center justify-center pointer-events-none select-none glitch">
+                400
+            </div>
+
+            <div class="glass-panel p-10 relative z-10">
+                <div class="mb-2">
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent)">Error 400</span>
+                </div>
+                <h1 class="orbitron text-2xl font-black tracking-wider text-white mb-3">
+                    Malformed Packet
+                </h1>
+                <p class="text-sm leading-relaxed mb-2 mono uppercase tracking-widest" style="color: rgba(255,255,255,0.35); font-size: 0.65rem;">
+                    Bad Request
+                </p>
+                <p class="text-sm leading-relaxed mb-8" style="color: var(--text-dim)">
+                    The request sent to the network was malformed or contained invalid syntax.<br>Check the data packet and retry the transmission.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="/home/" class="btn-nexus">Return to Feed</a>
+                    <a href="/" class="btn-nexus" style="background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                        Go to Homepage
+                    </a>
+                </div>
+
+                <p class="mono text-xs mt-8" style="color: rgba(255,255,255,0.15)">
+                    ERR_PACKET_MALFORMED · SYNTAX_INVALID
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- EXCLUSIVE MINI-GAME -->
+    <div class="w-full max-w-lg mx-auto mt-6">
+        <div class="glass-panel p-4" style="border-color: rgba(0,229,255,0.2); background: rgba(0,0,0,0.45);">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e5ff;box-shadow:0 0 6px #00e5ff;flex-shrink:0;"></span>
+                    <span class="mono text-xs uppercase tracking-widest" style="color: var(--accent); opacity: 0.65">// whack_bad_packets</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="mono" style="color:rgba(255,215,0,0.5);font-size:0.6rem;letter-spacing:0.1em;">◈ EXCLUSIVE</span>
+                    <span class="mono text-xs font-bold" style="color: rgba(0,229,255,0.5)">PACKET.SMASH</span>
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="560" height="200"
+                data-title="PACKET.SMASH"
+                data-hi="nexnet_mole_hi"
+                style="width:100%; height:auto; border-radius:10px; display:block; cursor:pointer; background: rgba(0,0,0,0.35);"
+                aria-label="PACKET.SMASH exclusive mini-game"></canvas>
+            <p class="mono text-xs mt-2 text-center" style="color: rgba(255,255,255,0.12)">
+                CLICK &middot; TAP &mdash; SMASH MALFORMED PACKETS
+            </p>
+        </div>
+    </div>
+    </div>
+
+    <script src="/js/space.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+    <script>
+(function () {
+    var C = document.getElementById('gameCanvas');
+    var ctx = C.getContext('2d');
+    var W = C.width, H = C.height, CYAN = '#00e5ff';
+    var HI_KEY = C.getAttribute('data-hi') || 'nexnet_mole_hi';
+    var hi = parseInt(localStorage.getItem(HI_KEY)||'0',10);
+    var HOLES=[], HOLE_R=26;
+    var cx=[70,210,350,490], cy=[50,110,168];
+    cx.forEach(function(x){cy.forEach(function(y){HOLES.push({x:x,y:y,active:false,flash:0});});});
+    var score,timeLeft,state,parts=[];
+    function init(){score=0;timeLeft=30;state='idle';HOLES.forEach(function(h){h.active=false;h.flash=0;});}
+    function activateRandom(){
+        var inactive=HOLES.filter(function(h){return !h.active;});
+        if(!inactive.length)return;
+        var h=inactive[Math.floor(Math.random()*inactive.length)]; h.active=true;
+        var dur=Math.max(600,1200-score*30);
+        setTimeout(function(){h.active=false;},dur);
+    }
+    function spawnParts(x,y){for(var i=0;i<10;i++){var a=Math.random()*Math.PI*2,v=2+Math.random()*4;parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:20,max:20});}}
+    function hitHole(mx,my){
+        if(state!=='playing')return;
+        HOLES.forEach(function(h){
+            if(!h.active)return;
+            var dx=mx-h.x,dy=my-h.y;
+            if(dx*dx+dy*dy<(HOLE_R+8)*(HOLE_R+8)){h.active=false;h.flash=12;score++;if(score>hi){hi=score;localStorage.setItem(HI_KEY,hi);}spawnParts(h.x,h.y);}
+        });
+    }
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        HOLES.forEach(function(h){
+            var glow=h.active||h.flash>0;
+            ctx.shadowColor=glow?CYAN:'rgba(0,229,255,0.3)';ctx.shadowBlur=glow?16:4;
+            ctx.fillStyle=glow?'rgba(0,229,255,0.18)':'rgba(0,229,255,0.04)';
+            ctx.strokeStyle=glow?CYAN:'rgba(0,229,255,0.2)';ctx.lineWidth=glow?2:1;
+            ctx.beginPath();ctx.arc(h.x,h.y,HOLE_R,0,Math.PI*2);ctx.fill();ctx.stroke();
+            if(glow){
+                ctx.fillStyle=CYAN;ctx.font='bold 10px "Fira Code",monospace';ctx.textAlign='center';
+                ctx.fillText('!',h.x,h.y+4);
+            }
+            if(h.flash>0)h.flash--;
+            ctx.shadowBlur=0;
+        });
+        parts.forEach(function(p){ctx.globalAlpha=p.life/p.max;ctx.fillStyle=CYAN;ctx.shadowColor=CYAN;ctx.shadowBlur=4;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
+        ctx.globalAlpha=1;ctx.shadowBlur=0;
+        parts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life--;});
+        parts=parts.filter(function(p){return p.life>0;});
+        ctx.fillStyle='rgba(0,229,255,0.55)';ctx.font='10px "Fira Code",monospace';ctx.textAlign='left';ctx.fillText('SCORE '+score,8,H-6);
+        ctx.fillStyle='rgba(0,229,255,0.25)';ctx.textAlign='right';ctx.fillText('BEST '+hi,W-8,H-6);
+        ctx.fillStyle='rgba(0,229,255,0.5)';ctx.textAlign='center';ctx.fillText('TIME '+timeLeft,W/2,H-6);
+        if(state==='idle'||state==='dead'){
+            ctx.fillStyle='rgba(5,5,5,0.75)';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+            ctx.shadowColor=CYAN;ctx.shadowBlur=18;ctx.fillStyle=CYAN;ctx.font='bold 14px "Orbitron",sans-serif';ctx.textAlign='center';
+            ctx.fillText(state==='dead'?(C.getAttribute('data-title-done')||'TIME UP!'):C.getAttribute('data-title')||'PACKET.SMASH',W/2,H/2-24);ctx.shadowBlur=0;
+            if(state==='dead'){ctx.fillStyle='rgba(0,229,255,0.45)';ctx.font='10px "Fira Code",monospace';ctx.fillText('SCORE: '+score+'  |  BEST: '+hi,W/2,H/2-6);}
+            ctx.fillStyle='rgba(0,229,255,0.4)';ctx.font='10px "Fira Code",monospace';
+            ctx.fillText('[ CLICK \u00b7 TAP TO '+(state==='idle'?'START':'PLAY AGAIN')+' ]',W/2,H/2+12);
+            ctx.fillStyle='rgba(0,229,255,0.2)';ctx.font='9px "Fira Code",monospace';
+            ctx.fillText('HIT GLOWING NODES \u2014 30 SECONDS',W/2,H/2+28);
+        }
+    }
+    var moleTimer, countTimer;
+    function start(){
+        init();state='playing';
+        var spawnInt=800;
+        function scheduleSpawn(){if(state!=='playing')return;activateRandom();spawnInt=Math.max(400,spawnInt-5);moleTimer=setTimeout(scheduleSpawn,spawnInt);}
+        scheduleSpawn();
+        countTimer=setInterval(function(){timeLeft--;if(timeLeft<=0){clearInterval(countTimer);clearTimeout(moleTimer);state='dead';}},1000);
+    }
+    C.addEventListener('click',function(e){
+        if(state!=='playing'){clearTimeout(moleTimer);clearInterval(countTimer);start();return;}
+        var rect=C.getBoundingClientRect();hitHole((e.clientX-rect.left)*(W/rect.width),(e.clientY-rect.top)*(H/rect.height));
+    });
+    C.addEventListener('touchstart',function(e){
+        e.preventDefault();
+        var rect=C.getBoundingClientRect();var t=e.touches[0];
+        if(state!=='playing'){clearTimeout(moleTimer);clearInterval(countTimer);start();return;}
+        hitHole((t.clientX-rect.left)*(W/rect.width),(t.clientY-rect.top)*(H/rect.height));
+    },{passive:false});
+    document.addEventListener('keydown',function(e){if(e.code==='Space'&&state!=='playing'){e.preventDefault();clearTimeout(moleTimer);clearInterval(countTimer);start();}});
+    init();requestAnimationFrame(function loop(){draw();requestAnimationFrame(loop);});
+})();
+    </script>
+</body>
+</html>

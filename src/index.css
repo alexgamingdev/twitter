@@ -1,0 +1,38 @@
+:root {
+  --bg: #e7f5ff;
+  --bg-accent: #c6e9ff;
+  --panel-bg: rgba(255, 255, 255, 0.86);
+  --line: #d7e7f4;
+  --ink: #0f1724;
+  --ink-soft: #597088;
+  --accent: #1d9bf0;
+  --panel-shadow: 0 12px 30px rgba(18, 32, 50, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 20%, rgba(29, 155, 240, 0.18) 0, transparent 32%),
+    radial-gradient(circle at 82% 9%, rgba(12, 112, 200, 0.18) 0, transparent 38%),
+    linear-gradient(180deg, var(--bg-accent), var(--bg));
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink);
+}

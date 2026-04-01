@@ -1,0 +1,52 @@
+{
+  "name": "twitter--ehemals-x-",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "electron-main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "sync:static": "powershell -NoProfile -Command \"New-Item -ItemType Directory -Force dist/home,dist/settings,dist/verify-email,dist/profile | Out-Null; Copy-Item home/index.html dist/home/index.html -Force; Copy-Item settings/index.html dist/settings/index.html -Force; Copy-Item verify-email/index.html dist/verify-email/index.html -Force; Copy-Item profile/index.html dist/profile/index.html -Force\"",
+    "build:exe": "set CSC_IDENTITY_AUTO_DISCOVERY=false&& npm run build && npm run sync:static && electron-builder --win --x64 --config.win.signAndEditExecutable=false",
+    "electron:dev": "electron .",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.oldtwitter.desktop",
+    "productName": "OldTwitter",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron-main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "firebase": "^12.11.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^41.1.0",
+    "electron-builder": "^26.8.1",
+    "electron-is-dev": "^3.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "vite": "^8.0.1"
+  }
+}
